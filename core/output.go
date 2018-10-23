@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 type Output struct {

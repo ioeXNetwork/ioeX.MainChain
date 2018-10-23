@@ -1,7 +1,7 @@
 package bloom
 
 import (
-	"github.com/ioeX/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 // MBlock is used to house intermediate information needed to generate a

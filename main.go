@@ -4,18 +4,18 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/ioeX/ioeX.Utility/common"
-	"github.com/ioeX/ioeX.MainChain/blockchain"
-	"github.com/ioeX/ioeX.MainChain/config"
-	"github.com/ioeX/ioeX.MainChain/log"
-	"github.com/ioeX/ioeX.MainChain/node"
-	"github.com/ioeX/ioeX.MainChain/pow"
-	"github.com/ioeX/ioeX.MainChain/protocol"
-	"github.com/ioeX/ioeX.MainChain/servers"
-	"github.com/ioeX/ioeX.MainChain/servers/httpjsonrpc"
-	"github.com/ioeX/ioeX.MainChain/servers/httpnodeinfo"
-	"github.com/ioeX/ioeX.MainChain/servers/httprestful"
-	"github.com/ioeX/ioeX.MainChain/servers/httpwebsocket"
+	"github.com/ioeXNetwork/ioeX.MainChain/blockchain"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
+	"github.com/ioeXNetwork/ioeX.MainChain/node"
+	"github.com/ioeXNetwork/ioeX.MainChain/pow"
+	"github.com/ioeXNetwork/ioeX.MainChain/protocol"
+	"github.com/ioeXNetwork/ioeX.MainChain/servers"
+	"github.com/ioeXNetwork/ioeX.MainChain/servers/httpjsonrpc"
+	"github.com/ioeXNetwork/ioeX.MainChain/servers/httpnodeinfo"
+	"github.com/ioeXNetwork/ioeX.MainChain/servers/httprestful"
+	"github.com/ioeXNetwork/ioeX.MainChain/servers/httpwebsocket"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 const (
@@ -79,7 +79,7 @@ func main() {
 	log.Info("2. Start the P2P networks")
 	noder = node.InitLocalNode()
 
-	servers.NodeForServers = noder
+	servers.ServerNode = noder
 
 	log.Info("3. --Start the RPC service")
 	go httpjsonrpc.StartRPCServer()

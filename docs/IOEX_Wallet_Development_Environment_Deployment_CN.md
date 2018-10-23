@@ -1,4 +1,4 @@
-# ioeX Wallet Development Environment Deployment
+# IOEX Wallet Development Environment Deployment
 
 ## 钱包部署
 
@@ -7,21 +7,21 @@
 2. 准备相关文件
 
     ```bash
-    $ sudo ls -al /opt/docker_ioex_wallet
+    $ sudo ls -al /opt/docker_ela_wallet
 
     total 36
-    drwxrwxr-x 6 ioeX ioeX 4096 Apr 20 10:18 ./
+    drwxrwxr-x 6 elastos elastos 4096 Apr 20 10:18 ./
     drwxr-xr-x 3 root   root   4096 Apr 20 14:05 ../
-    -rw-rw-r-- 1 ioeX ioeX  395 Apr 19 16:50 authorized_keys
-    -rw-rw-r-- 1 ioeX ioeX  502 Apr 20 10:18 Dockerfile
-    drwxrwxr-x 2 ioeX ioeX 4096 Apr 17 16:05 ioeX.org/
-    drwxrwxr-x 2 ioeX ioeX 4096 Apr 17 16:05 nginx/
-    drwxrwxr-x 2 ioeX ioeX 4096 Apr 19 18:09 supervisor/
-    -rwxrwxr-x 1 ioeX ioeX 1314 Apr 19 18:55 walletWrapper.sh*
-    drwxr-xr-x 7 ioeX ioeX 4096 Apr 13 12:16 www/
+    -rw-rw-r-- 1 elastos elastos  395 Apr 19 16:50 authorized_keys
+    -rw-rw-r-- 1 elastos elastos  502 Apr 20 10:18 Dockerfile
+    drwxrwxr-x 2 elastos elastos 4096 Apr 17 16:05 elastos.org/
+    drwxrwxr-x 2 elastos elastos 4096 Apr 17 16:05 nginx/
+    drwxrwxr-x 2 elastos elastos 4096 Apr 19 18:09 supervisor/
+    -rwxrwxr-x 1 elastos elastos 1314 Apr 19 18:55 walletWrapper.sh*
+    drwxr-xr-x 7 elastos elastos 4096 Apr 13 12:16 www/
 
     # authorized_keys 文件包含用户提供的 openssh 公钥，启动镜像时会映射到镜像中，这样用户可以通过 openssh 连接到容器
-    # ioeX.org 目录中包含 https 访问钱包和浏览器所需的服务器证书和私钥
+    # elastos.org 目录中包含 https 访问钱包和浏览器所需的服务器证书和私钥
     # nginx 目录中包含钱包相关应用的配置文件，可以从钱包相关代码中获得
     # supervisor 目录中包含 supervisor 相关配置文件，可以从钱包代码中获得
     # www 目录中包含钱包相关应用的代码
@@ -104,9 +104,9 @@
 3. 创建 `docker` 镜像
 
     ```bash
-    $ cd /opt/docker_ioex_wallet
+    $ cd /opt/docker_ela_wallet
 
-    $ docker build -t ioex_wallet_run_01 .
+    $ docker build -t ela_wallet_run_01 .
     # 这里在安装nodejs时可能会失败，需要通过代理连接
     ```
 
@@ -114,12 +114,12 @@
 
     ```bash
     $ docker run -m 2g --cpus=2 -p 922:22 -p 20443:443 -p 20080:80 \
-    -v /opt/docker_ioex_wallet/authorized_keys:/root/.ssh/authorized_keys \
-    -v /opt/docker_ioex_wallet/ioeX.org:/etc/ssl/ioeX.org \
-    -v /opt/docker_ioex_wallet/nginx:/etc/nginx/conf.d \
-    -v /opt/docker_ioex_wallet/supervisor:/etc/supervisor/conf.d \
-    -v /opt/docker_ioex_wallet/www:/data/www \
-    ioex_wallet_run_01
+    -v /opt/docker_ela_wallet/authorized_keys:/root/.ssh/authorized_keys \
+    -v /opt/docker_ela_wallet/elastos.org:/etc/ssl/elastos.org \
+    -v /opt/docker_ela_wallet/nginx:/etc/nginx/conf.d \
+    -v /opt/docker_ela_wallet/supervisor:/etc/supervisor/conf.d \
+    -v /opt/docker_ela_wallet/www:/data/www \
+    ela_wallet_run_01
     ```
 
    * 这里限制容器可以使用的内存数量为2G，使用的cpu数量为2个.
@@ -132,25 +132,25 @@
 2. 准备相关文件
 
     ```bash
-    $ sudo ls -al /opt/docker_ioex_node/
+    $ sudo ls -al /opt/docker_ela_node/
 
     total 24
-    drwxrwxr-x 3 ioeX ioeX 4096 Apr 20 10:17 ./
+    drwxrwxr-x 3 elastos elastos 4096 Apr 20 10:17 ./
     drwxr-xr-x 4 root   root   4096 Apr 20 14:42 ../
-    -rw-rw-r-- 1 ioeX ioeX  395 Apr 19 19:18 authorized_keys
-    -rw-rw-r-- 1 ioeX ioeX  213 Apr 19 19:34 Dockerfile
-    drwxrwxr-x 4 ioeX ioeX 4096 Apr 19 19:37 ioex_node/
-    -rwxrwxr-x 1 ioeX ioeX 1221 Apr 17 11:56 nodeWrapper.sh*
+    -rw-rw-r-- 1 elastos elastos  395 Apr 19 19:18 authorized_keys
+    -rw-rw-r-- 1 elastos elastos  213 Apr 19 19:34 Dockerfile
+    drwxrwxr-x 4 elastos elastos 4096 Apr 19 19:37 ela_node/
+    -rwxrwxr-x 1 elastos elastos 1221 Apr 17 11:56 nodeWrapper.sh*
 
     # authorized_keys 文件包含用户提供的 openssh 公钥，创建镜像时会复制到镜像中，这样用户可以通过 openssh 连接到容器
-    # ioex_node 目录中包含链节点相关应用和配置文件
+    # ela_node 目录中包含链节点相关应用和配置文件
     ```
 
    * 链节点和命令行客户端代码和编译方法以及配置和命令行参数可以参考:
 
-     * [ioeX.MainChain](../README.md)
+     * [Elastos.ELA](../README.md)
 
-     * [ioeX.Client](https://github.com/ioeX/ioeX.Client/blob/master/README.md)
+     * [Elastos.ELA.Client](https://github.com/elastos/Elastos.ELA.Client/blob/master/README.md)
 
    **`Dockerfile文件内容如下`**
 
@@ -177,17 +177,17 @@
       exit $status
     fi
 
-    # Start the IOEX_NODE
-    if [ ! -d "/opt/ioex_node" ];then
-      echo "IOEX_NODE program not exists";
+    # Start the ELA_NODE
+    if [ ! -d "/opt/ela_node" ];then
+      echo "ELA_NODE program not exists";
       exit
     fi
 
-    cd /opt/ioex_node/ && ./node -p ioeX > /dev/null &
+    cd /opt/ela_node/ && ./node -p elastos > /dev/null &
 
     status=$?
     if [ $status -ne 0 ]; then
-      echo "Failed to start IOEX_NODE: $status"
+      echo "Failed to start ELA_NODE: $status"
       exit $status
     fi
 
@@ -206,15 +206,15 @@
 3. 创建 `docker` 镜像
 
     ```bash
-    cd /opt/docker_ioex_node
-    $ docker build -t ioex_node_run_01 .
+    cd /opt/docker_ela_node
+    $ docker build -t ela_node_run_01 .
     ```
 
 4. 启动 `docker` 镜像
 
     ```bash
     $ docker run -m 512m --cpus=2 -p 922:22 -p 20338:20338 -p 20334:20334 -p 20335:20335 \
-    -v /opt/docker_ioex_node/authorized_keys:/root/.ssh/authorized_keys \
-    -v /opt/docker_ioex_node/ioex_node:/opt/ioex_node \
-    ioex_node_run_01
+    -v /opt/docker_ela_node/authorized_keys:/root/.ssh/authorized_keys \
+    -v /opt/docker_ela_node/ela_node:/opt/ela_node \
+    ela_node_run_01
     ```

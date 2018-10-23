@@ -8,13 +8,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ioeX/ioeX.MainChain/auxpow"
-	"github.com/ioeX/ioeX.MainChain/config"
-	"github.com/ioeX/ioeX.MainChain/core"
-	"github.com/ioeX/ioeX.MainChain/errors"
-	"github.com/ioeX/ioeX.MainChain/log"
+	"github.com/ioeXNetwork/ioeX.MainChain/auxpow"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/core"
+	"github.com/ioeXNetwork/ioeX.MainChain/errors"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
 
-	"github.com/ioeX/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
 	"github.com/stretchr/testify/assert"
 )
 

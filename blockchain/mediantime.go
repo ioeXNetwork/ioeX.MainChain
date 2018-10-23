@@ -5,7 +5,7 @@
 package blockchain
 
 import (
-	"github.com/ioeX/ioeX.MainChain/log"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
 	"math"
 	"sort"
 	"sync"

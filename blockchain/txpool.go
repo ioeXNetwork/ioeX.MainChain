@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"sync"
 
-	. "github.com/ioeX/ioeX.Utility/common"
-	"github.com/ioeX/ioeX.MainChain/config"
-	. "github.com/ioeX/ioeX.MainChain/core"
-	. "github.com/ioeX/ioeX.MainChain/errors"
-	"github.com/ioeX/ioeX.MainChain/events"
-	"github.com/ioeX/ioeX.MainChain/log"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
+	. "github.com/ioeXNetwork/ioeX.MainChain/core"
+	. "github.com/ioeXNetwork/ioeX.MainChain/errors"
+	"github.com/ioeXNetwork/ioeX.MainChain/events"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 type TxPool struct {
@@ -51,7 +51,6 @@ func (pool *TxPool) AppendToTxnPool(txn *Transaction) ErrCode {
 		log.Warn("[TxPool CheckTransactionContext] failed", txn.Hash().String())
 		return errCode
 	}
-
 	//verify transaction by pool with lock
 	if errCode := pool.verifyTransactionWithTxnPool(txn); errCode != Success {
 		log.Warn("[TxPool verifyTransactionWithTxnPool] failed", txn.Hash())
@@ -82,7 +81,7 @@ func (pool *TxPool) GetTransactionPool(hasMaxCount bool) map[Uint256]*Transactio
 		count = len(pool.txnList)
 	}
 	var num int
-	txnMap := make(map[Uint256]*Transaction, count)
+	txnMap := make(map[Uint256]*Transaction)
 	for txnId, tx := range pool.txnList {
 		txnMap[txnId] = tx
 		num++

@@ -3,9 +3,9 @@ package node
 import (
 	"sync"
 
-	"github.com/ioeX/ioeX.MainChain/protocol"
+	"github.com/ioeXNetwork/ioeX.MainChain/protocol"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 type idCache struct {

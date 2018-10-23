@@ -5,10 +5,10 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ioeX/ioeX.MainChain/config"
-	"github.com/ioeX/ioeX.MainChain/log"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 var (
@@ -135,6 +135,9 @@ func CompactToBig(compact uint32) *big.Int {
 	mantissa := compact & 0x007fffff
 	isNegative := compact&0x00800000 != 0
 	exponent := uint(compact >> 24)
+
+	log.Tracef("mantissa %x", mantissa)
+	log.Tracef("exponent %d", exponent)
 
 	// Since the base for the exponent is 256, the exponent can be treated
 	// as the number of bytes to represent the full 256-bit number.  So,

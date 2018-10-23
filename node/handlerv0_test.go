@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ioeX/ioeX.MainChain/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
 
-	"github.com/ioeX/ioeX.Utility/common"
-	"github.com/ioeX/ioeX.Utility/p2p"
-	"github.com/ioeX/ioeX.Utility/p2p/msg"
-	"github.com/ioeX/ioeX.Utility/p2p/msg/v0"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/p2p"
+	"github.com/ioeXNetwork/ioeX.Utility/p2p/msg"
+	"github.com/ioeXNetwork/ioeX.Utility/p2p/msg/v0"
 	"github.com/stretchr/testify/assert"
 )
 

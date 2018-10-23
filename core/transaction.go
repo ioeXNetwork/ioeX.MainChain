@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 //for different transaction types with different payload format

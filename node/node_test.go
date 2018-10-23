@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/ioeX/ioeX.MainChain/blockchain"
-	"github.com/ioeX/ioeX.MainChain/config"
-	"github.com/ioeX/ioeX.MainChain/core"
-	"github.com/ioeX/ioeX.MainChain/log"
-	"github.com/ioeX/ioeX.MainChain/protocol"
+	. "github.com/ioeXNetwork/ioeX.MainChain/blockchain"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/core"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
+	"github.com/ioeXNetwork/ioeX.MainChain/protocol"
 
-	"github.com/ioeX/ioeX.Utility/common"
-	"github.com/ioeX/ioeX.Utility/p2p"
-	"github.com/ioeX/ioeX.Utility/p2p/msg"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/p2p"
+	"github.com/ioeXNetwork/ioeX.Utility/p2p/msg"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +43,7 @@ func initLocalNode(t *testing.T) {
 	InitLocalNode()
 }
 
-func newTestNode(t *testing.T, port uint16) ( protocol.Noder, protocol.Noder) {
+func newTestNode(t *testing.T, port uint16) (protocol.Noder, protocol.Noder) {
 	buf := make([]byte, 8)
 	conn, err := NonTLSDial(fmt.Sprint("127.0.0.1:", port))
 	if err != nil {

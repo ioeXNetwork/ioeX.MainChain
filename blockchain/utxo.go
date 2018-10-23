@@ -3,7 +3,7 @@ package blockchain
 import (
 	"io"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 type UTXO struct {

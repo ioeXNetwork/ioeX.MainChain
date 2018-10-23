@@ -7,28 +7,12 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/ioeX/ioeX.MainChain/config"
-	. "github.com/ioeX/ioeX.MainChain/core"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
+	. "github.com/ioeXNetwork/ioeX.MainChain/core"
 
-	"github.com/ioeX/ioeX.Utility/common"
-	"github.com/ioeX/ioeX.Utility/crypto"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/crypto"
 )
-
-func VerifySignature(tx *Transaction) error {
-	hashes, err := GetTxProgramHashes(tx)
-	if err != nil {
-		return err
-	}
-
-	buf := new(bytes.Buffer)
-	tx.SerializeUnsigned(buf)
-
-	// Sort first
-	common.SortProgramHashes(hashes)
-	SortPrograms(tx.Programs)
-
-	return RunPrograms(buf.Bytes(), hashes, tx.Programs)
-}
 
 func RunPrograms(data []byte, hashes []common.Uint168, programs []*Program) error {
 	if len(hashes) != len(programs) {
@@ -73,17 +57,13 @@ func RunPrograms(data []byte, hashes []common.Uint168, programs []*Program) erro
 	return nil
 }
 
-func GetTxProgramHashes(tx *Transaction) ([]common.Uint168, error) {
+func GetTxProgramHashes(tx *Transaction, references map[*Input]*Output) ([]common.Uint168, error) {
 	if tx == nil {
 		return nil, errors.New("[Transaction],GetProgramHashes transaction is nil.")
 	}
 	hashes := make([]common.Uint168, 0)
 	uniqueHashes := make([]common.Uint168, 0)
 	// add inputUTXO's transaction
-	references, err := DefaultLedger.Store.GetTxReference(tx)
-	if err != nil {
-		return nil, errors.New("[Transaction], GetProgramHashes failed.")
-	}
 	for _, output := range references {
 		programHash := output.ProgramHash
 		hashes = append(hashes, programHash)

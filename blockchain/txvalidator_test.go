@@ -9,16 +9,16 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ioeX/ioeX.MainChain/config"
-	"github.com/ioeX/ioeX.MainChain/core"
-	"github.com/ioeX/ioeX.MainChain/log"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/core"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
 
-	"github.com/ioeX/ioeX.Utility/common"
-	"github.com/ioeX/ioeX.Utility/crypto"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/crypto"
 	"github.com/stretchr/testify/assert"
 )
 
-var IOEX = int64(math.Pow(10, 8))
+var ELA = int64(math.Pow(10, 8))
 
 func TestTxValidatorInit(t *testing.T) {
 	log.Init(
@@ -165,7 +165,7 @@ func TestCheckTransactionOutput(t *testing.T) {
 	assert.EqualError(t, err, "asset ID in coinbase is invalid")
 
 	// reward to foundation in coinbase = 30%
-	totalReward := GetBlockRewardAmount(0)
+	totalReward := RewardAmountPerBlock
 	t.Logf("Block reward amount %s", totalReward.String())
 	foundationReward := common.Fixed64(float64(totalReward) * 0.3)
 	t.Logf("Foundation reward amount %s", foundationReward.String())
@@ -377,7 +377,7 @@ func TestCheckTransactionPayload(t *testing.T) {
 	tx := new(core.Transaction)
 	payload := &core.PayloadRegisterAsset{
 		Asset: core.Asset{
-			Name:      "IOEX",
+			Name:      "ELA",
 			Precision: 0x08,
 			AssetType: core.Token,
 		},
@@ -433,38 +433,39 @@ func TestCheckTransactionBalance(t *testing.T) {
 	// WithdrawFromSideChain will pass check in any condition
 	tx := new(core.Transaction)
 	tx.TxType = core.WithdrawFromSideChain
-	err := CheckTransactionBalance(tx)
-	assert.NoError(t, err)
-
-	// deposit 100 IOEX to foundation account
+	references, _ := DefaultLedger.Store.GetTxReference(tx)
+	var err error
+	// deposit 100 ELA to foundation account
 	deposit := NewCoinBaseTransaction(new(core.PayloadCoinBase), 0)
 	deposit.Outputs = []*core.Output{
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress, Value: common.Fixed64(100 * IOEX)},
+		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress, Value: common.Fixed64(100 * ELA)},
 	}
 	DefaultLedger.Store.(*ChainStore).NewBatch()
 	DefaultLedger.Store.(*ChainStore).PersistTransaction(deposit, 0)
 	DefaultLedger.Store.(*ChainStore).BatchCommit()
 
-	// invalid output value
+	// // invalid output value
 	tx = NewCoinBaseTransaction(new(core.PayloadCoinBase), 0)
 	tx.Inputs = []*core.Input{
 		{Previous: *core.NewOutPoint(deposit.Hash(), 0)},
 	}
-	tx.Outputs = []*core.Output{
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress, Value: common.Fixed64(-20 * IOEX)},
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: common.Uint168{}, Value: common.Fixed64(-60 * IOEX)},
-	}
-	err = CheckTransactionBalance(tx)
-	assert.EqualError(t, err, "Invalide transaction UTXO output.")
+	//tx.Outputs = []*core.Output{
+	//	{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress, Value: common.Fixed64(-20 * ELA)},
+	//	{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: common.Uint168{}, Value: common.Fixed64(-60 * ELA)},
+	//}
+	//references, _ = DefaultLedger.Store.GetTxReference(tx)
+	//err = CheckTransactionFee(tx, references)
+	//assert.EqualError(t, err, "Invalide transaction UTXO output.")
 
 	// invalid transaction fee
-	config.Parameters.PowConfiguration.MinTxFee = int(1 * IOEX)
+	config.Parameters.PowConfiguration.MinTxFee = int(1 * ELA)
 	tx.Outputs = []*core.Output{
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress, Value: common.Fixed64(30 * IOEX)},
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: common.Uint168{}, Value: common.Fixed64(70 * IOEX)},
+		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress, Value: common.Fixed64(30 * ELA)},
+		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: common.Uint168{}, Value: common.Fixed64(70 * ELA)},
 	}
-	err = CheckTransactionBalance(tx)
-	assert.EqualError(t, err, "Transaction fee not enough")
+	references, _ = DefaultLedger.Store.GetTxReference(tx)
+	err = CheckTransactionFee(tx, references)
+	assert.EqualError(t, err, "transaction fee not enough")
 
 	// rollback deposit above
 	DefaultLedger.Store.(*ChainStore).NewBatch()
@@ -517,4 +518,16 @@ func TestCheckSideChainPowConsensus(t *testing.T) {
 	if err == nil {
 		t.Error("TestCheckSideChainPowConsensus failed.")
 	}
+}
+
+func TestCheckDestructionAddress(t *testing.T) {
+	destructionAddress := "ELANULLXXXXXXXXXXXXXXXXXXXXXYvs3rr"
+	txID, _ := common.Uint256FromHexString("7e8863a503e90e6464529feb1c25d98c903e01bec00ccfea2475db4e37d7328b")
+	programHash, _ := common.Uint168FromAddress(destructionAddress)
+	reference := map[*core.Input]*core.Output{
+		&core.Input{core.OutPoint{*txID, 1234}, 123456}: &core.Output{ProgramHash: *programHash},
+	}
+
+	err := CheckDestructionAddress(reference)
+	assert.EqualError(t, err, fmt.Sprintf("cannot use utxo in the Elastos foundation destruction address"))
 }

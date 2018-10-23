@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AlexpanXX/fsnotify"
+	"github.com/ioeXNetwork/fsnotify"
 )
 
 const (
@@ -33,7 +33,7 @@ func Color(code, msg string) string {
 }
 
 const (
-	debugLog    = iota
+	debugLog = iota
 	infoLog
 	warnLog
 	errorLog

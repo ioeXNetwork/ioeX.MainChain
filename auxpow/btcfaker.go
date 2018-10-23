@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"time"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 func getBtcCoinbase(msgBlockHash Uint256) *BtcTx {

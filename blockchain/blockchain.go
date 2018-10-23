@@ -11,14 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ioeX/ioeX.MainChain/config"
-	. "github.com/ioeX/ioeX.MainChain/core"
-	. "github.com/ioeX/ioeX.MainChain/errors"
-	"github.com/ioeX/ioeX.MainChain/events"
-	"github.com/ioeX/ioeX.MainChain/log"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
+	. "github.com/ioeXNetwork/ioeX.MainChain/core"
+	"github.com/ioeXNetwork/ioeX.MainChain/events"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
 
-	. "github.com/ioeX/ioeX.Utility/common"
-	"github.com/ioeX/ioeX.Utility/crypto"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/crypto"
 )
 
 const (
@@ -127,7 +126,7 @@ func GetGenesisBlock() (*Block, error) {
 	coinBase.Outputs = []*Output{
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       3300 * 10000 * 100000000,
+			Value:       20000 * 10000 * 100000000,
 			ProgramHash: FoundationAddress,
 		},
 	}
@@ -795,11 +794,10 @@ func (bc *Blockchain) DisconnectBlock(node *BlockNode, block *Block) error {
 // (best) chain.
 func (bc *Blockchain) ConnectBlock(node *BlockNode, block *Block) error {
 
-	for _, txVerify := range block.Transactions {
-		if errCode := CheckTransactionContext(txVerify); errCode != Success {
-			fmt.Println("CheckTransactionContext failed when verify block", errCode)
-			return errors.New(fmt.Sprintf("CheckTransactionContext failed when verify block"))
-		}
+	err := CheckBlockContext(block)
+	if err != nil {
+		log.Errorf("PowCheckBlockSanity error %s", err.Error())
+		return err
 	}
 
 	// Make sure it's extending the end of the best chain.
@@ -810,7 +808,7 @@ func (bc *Blockchain) ConnectBlock(node *BlockNode, block *Block) error {
 	}
 
 	// Insert the block into the database which houses the main chain.
-	err := DefaultLedger.Store.SaveBlock(block)
+	err = DefaultLedger.Store.SaveBlock(block)
 	if err != nil {
 		return err
 	}

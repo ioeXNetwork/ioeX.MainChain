@@ -7,11 +7,13 @@ import (
 	"sync"
 	"time"
 
-	. "github.com/ioeX/ioeX.MainChain/core"
-	"github.com/ioeX/ioeX.MainChain/events"
-	"github.com/ioeX/ioeX.MainChain/log"
+	. "github.com/ioeXNetwork/ioeX.MainChain/core"
+	"github.com/ioeXNetwork/ioeX.MainChain/events"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
+
+	"github.com/elastos/Elastos.ELA/config"
 )
 
 const ValueNone = 0
@@ -47,7 +49,8 @@ type ChainStore struct {
 }
 
 func NewChainStore() (IChainStore, error) {
-	st, err := NewLevelDB("Chain")
+	/* Hungjiun 20181012, open the chain store file according to network type of blockcahin */
+	st, err := NewLevelDB(config.Parameters.ChainParam.ChainStorePath)
 	if err != nil {
 		return nil, err
 	}
@@ -351,16 +354,12 @@ func (c *ChainStore) PersistAsset(assetId Uint256, asset Asset) error {
 }
 
 func (c *ChainStore) GetAsset(hash Uint256) (*Asset, error) {
-	log.Debugf("GetAsset Hash: %s", hash.String())
-
 	asset := new(Asset)
 	prefix := []byte{byte(ST_Info)}
 	data, err := c.Get(append(prefix, hash.Bytes()...))
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("GetAsset Data: %s", data)
-
 	err = asset.Deserialize(bytes.NewReader(data))
 	if err != nil {
 		return nil, err

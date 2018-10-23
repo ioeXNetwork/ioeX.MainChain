@@ -1,4 +1,4 @@
-package: github.com/ioeX/ioeX.MainChain
+package: github.com/ioeXNetwork/ioeX.MainChain
 import:
 - package: golang.org/x/crypto
   repo: https://github.com/golang/crypto.git
@@ -6,9 +6,10 @@ import:
 - package: golang.org/x/sys
   repo: https://github.com/golang/sys.git
   vcs: git
-- package: github.com/ioeX/ioeX.Utility
-  version: dev
-- package: github.com/AlexpanXX/fsnotify
+- package: github.com/ioeXNetwork/ioeX.Utility
+  vcs: git
+- package: github.com/ioeXNetwork/fsnotify
+  vcs: git
 - package: github.com/gorilla/websocket
 - package: github.com/mattn/go-sqlite3
 - package: github.com/pborman/uuid

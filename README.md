@@ -1,8 +1,6 @@
-# ioeX.MainChain [![Build Status](https://travis-ci.org/ioeX/ioeX.MainChain.svg?branch=master)](https://travis-ci.org/ioeX/ioeX.MainChain)
+# ioeX.MainChain
 
 ## Summary
-
-ioeX leveraged Elastos functions to create its owned features and also business cases.
 
 ioeXcoin is the digital currency solution within ioeX eco system.
 
@@ -30,11 +28,11 @@ $ brew install go@1.9
 > If you install older version, such as v1.8, you may get missing math/bits package error when build.
 
 ### Setup basic workspace
-In this instruction we use ~/dev/src/github.com/ioeX as our working directory. If you clone the source code to a different directory, please make sure you change other environment variables accordingly (not recommended). 
+In this instruction we use ~/dev/src/github.com/ioeXNetwork as our working directory. If you clone the source code to a different directory, please make sure you change other environment variables accordingly (not recommended). 
 
 ```shell
-$ mkdir ~/dev/bin
-$ mkdir ~/dev/src/github.com/ioeX/
+$ mkdir -p ~/dev/bin
+$ mkdir -p ~/dev/src/github.com/ioeXNetwork/
 ```
 
 ### Set correct environment variables
@@ -69,20 +67,20 @@ glide version 0.13.1
 
 If you cannot see the version number, there must be something wrong when install.
 
-### Clone source code to $GOPATH/src/github.com/ioeX folder
-Make sure you are in the folder of $GOPATH/src/github.com/ioeX
+### Clone source code to $GOPATH/src/github.com/ioex folder
+Make sure you are in the folder of $GOPATH/src/github.com/ioeXNetwork
 ```shell
-$ git clone https://github.com/ioeX/ioeX.MainChain.git
+$ git clone http://github.com/ioeXNetwork/ioeX.MainChain.git
 ```
 
-If clone works successfully, you should see folder structure like $GOPATH/src/github.com/ioeX/ioeX.MainChain/Makefile
+If clone works successfully, you should see folder structure like $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain/Makefile
 ### Glide install
 
-cd $GOPATH/src/github.com/ioeX/ioeX.MainChain and Run `glide update && glide install` to install depandencies.
+cd $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain and Run `glide update && glide install` to install dependencies.
 
 ### Make
 
-cd $GOPATH/src/github.com/ioeX/ioeX.MainChain and Run `make` to build files.
+cd $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain and Run `make` to build files.
 
 If you did not see any error message, congratulations, you have made the IOEX full node.
 
@@ -119,11 +117,11 @@ $ sudo apt-get install -y golang-1.9-go
 > If you install older version, such as v1.8, you may get missing math/bits package error when build.
 
 ### Setup basic workspace
-In this instruction we use ~/dev/src/github.com/ioeX/ as our working directory. If you clone the source code to a different directory, please make sure you change other environment variables accordingly (not recommended). 
+In this instruction we use ~/dev/src/github.com/ioeXNetwork/ as our working directory. If you clone the source code to a different directory, please make sure you change other environment variables accordingly (not recommended). 
 
 ```shell
-$ mkdir ~/dev/bin
-$ mkdir ~/dev/src/github.com/ioeX
+$ mkdir -p ~/dev/bin
+$ mkdir -p ~/dev/src/github.com/ioeXNetwork
 ```
 
 ### Set correct environment variables
@@ -159,22 +157,22 @@ glide version v0.13.1
 
 If you cannot see the version number, there must be something wrong when install.
 
-### Clone source code to $GOPATH/src/github.com/ioeX folder
-Make sure you are in the folder of $GOPATH/src/github.com/ioeX
+### Clone source code to $GOPATH/src/github.com/ioeXNetwork folder
+Make sure you are in the folder of $GOPATH/src/github.com/ioeXNetwork
 ```shell
-$ git clone https://github.com/ioeX/ioeX.MainChain.git
+$ git clone http://github.com/ioeXNetwork/ioeX.MainChain.git
 ```
 
-If clone works successfully, you should see folder structure like $GOPATH/src/github.com/ioeX/ioeX.MainChain/Makefile
+If clone works successfully, you should see folder structure like $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain/Makefile
 ### Glide install
 
-cd $GOPATH/src/github.com/ioeX/ioeX.MainChain and Run `glide update && glide install` to install depandencies.
+cd $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain and Run `glide update && glide install` to install dependencies.
 
 ### Make
 
-cd $GOPATH/src/github.com/ioeX/ioeX.MainChain and Run `make` to build files.
+cd $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain and Run `make` to build files.
 
-If you did not see any error message, congratulations, you have made the IOEX full node.
+If you did not see any error message, congratulations, you have made the ioeXNetwork full node.
 
 ## Run on Ubuntu
 
@@ -211,4 +209,4 @@ In the above instruction, we use default configuration file `config.json` in the
 
 If you want to learn the API of ioeX.MainChain, please refer to the following:
 
-- [ioeX_Wallet_Node_API](docs/ioeX_Wallet_Node_API_CN.md)
+- [IOEX_Wallet_Node_API](docs/IOEX_Wallet_Node_API_CN.md)

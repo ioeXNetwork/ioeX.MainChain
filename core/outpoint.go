@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 type OutPoint struct {

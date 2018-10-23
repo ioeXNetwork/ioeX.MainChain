@@ -3,7 +3,7 @@ package core
 import (
 	"io"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 const PayloadCoinBaseVersion byte = 0x04

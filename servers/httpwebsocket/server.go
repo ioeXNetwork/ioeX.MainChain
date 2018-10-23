@@ -1,25 +1,25 @@
 package httpwebsocket
 
 import (
-	"net"
-	"sync"
-	"time"
-	"strconv"
 	"context"
-	"net/http"
 	"crypto/tls"
 	"encoding/json"
+	"net"
+	"net/http"
+	"strconv"
+	"sync"
+	"time"
 
-	chain "github.com/ioeX/ioeX.MainChain/blockchain"
-	. "github.com/ioeX/ioeX.MainChain/config"
-	. "github.com/ioeX/ioeX.MainChain/core"
-	"github.com/ioeX/ioeX.MainChain/events"
-	. "github.com/ioeX/ioeX.MainChain/errors"
-	"github.com/ioeX/ioeX.MainChain/log"
-	. "github.com/ioeX/ioeX.MainChain/servers"
+	chain "github.com/ioeXNetwork/ioeX.MainChain/blockchain"
+	. "github.com/ioeXNetwork/ioeX.MainChain/config"
+	. "github.com/ioeXNetwork/ioeX.MainChain/core"
+	. "github.com/ioeXNetwork/ioeX.MainChain/errors"
+	"github.com/ioeXNetwork/ioeX.MainChain/events"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
+	. "github.com/ioeXNetwork/ioeX.MainChain/servers"
 
-	"github.com/pborman/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/pborman/uuid"
 )
 
 var instance *WebSocketServer

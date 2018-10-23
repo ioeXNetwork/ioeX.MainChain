@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/ioeX/ioeX.MainChain/auxpow"
+	"github.com/ioeXNetwork/ioeX.MainChain/auxpow"
 
-	. "github.com/ioeX/ioeX.Utility/common"
+	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 type Header struct {

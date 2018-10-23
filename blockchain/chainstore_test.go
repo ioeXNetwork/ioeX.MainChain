@@ -4,9 +4,9 @@ import (
 	"container/list"
 	"testing"
 
-	ioex "github.com/ioeX/ioeX.MainChain/core"
+	ioex "github.com/ioeXNetwork/ioeX.MainChain/core"
 
-	"github.com/ioeX/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 var testChainStore *ChainStore

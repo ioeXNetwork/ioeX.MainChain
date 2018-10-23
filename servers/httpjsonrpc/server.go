@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	. "github.com/ioeX/ioeX.MainChain/config"
-	"github.com/ioeX/ioeX.MainChain/errors"
-	"github.com/ioeX/ioeX.MainChain/log"
-	. "github.com/ioeX/ioeX.MainChain/servers"
+	. "github.com/ioeXNetwork/ioeX.MainChain/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/errors"
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
+	. "github.com/ioeXNetwork/ioeX.MainChain/servers"
 )
 
 //an instance of the multiplexer

@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ioeX/ioeX.MainChain/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
 
-	"github.com/ioeX/ioeX.Utility/common"
+	"github.com/ioeXNetwork/ioeX.Utility/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,9 +19,9 @@ var (
 )
 
 func TestGetBlockRewardAmount(t *testing.T) {
-	var blocks uint32 = 100 * 10000
-	for i := uint32(0); i <= blocks; i++ {
-		if !assert.Equal(t, GetBlockRewardAmount(i), calcBlockSubsidy(i)) {
+	var blocks = uint32(GeneratedBlocksPerYear)
+	for i := uint32(0); i < blocks; i++ {
+		if !assert.Equal(t, calcBlockSubsidy(i), RewardAmountPerBlock) {
 			break
 		}
 	}

@@ -1,8 +1,8 @@
-# ioeX Wallet Development Environment Document
+# IOEX Wallet Development Environment Document
 
 ## 开发服务器获取
 
-1. 使用邮箱将 `ssh public key` 发送给 `lifayi@ioeX.org` 请求分配开发服务器，管理员分配成功后回复相应的服务器地址和访问方法。
+1. 使用邮箱将 `ssh public key` 发送给 `lifayi@elastos.org` 请求分配开发服务器，管理员分配成功后回复相应的服务器地址和访问方法。
 
     通常推荐使用证书方式登录服务器，如果需要使用密码登录也可以在邮件中进行说明。
 
@@ -18,19 +18,19 @@
     ls -al /opt/ioex_node
 
     total 24924
-    drwxrwxr-x 4 ioeX ioeX     4096 Apr 20 17:19 ./
-    drwxrwxr-x 5 ioeX ioeX     4096 Apr 20 11:50 ../
-    drwxr-xr-x 2 ioeX ioeX     4096 Apr 20 12:08 Chain/
-    -rw-rw-r-- 1 ioeX ioeX       34 Apr 20 11:51 cli-config.json
-    -rw-rw-r-- 1 ioeX ioeX     1088 Apr 20 12:02 config.json
-    -rwxrwxr-x 1 ioeX ioeX 13565344 Apr 20 11:51 ioex-cli*
-    -rw-rw-r-- 1 ioeX ioeX      444 Apr 20 12:01 keystore.dat
-    drwxrw-r-- 2 ioeX ioeX     4096 Apr 20 12:07 Log/
-    -rwxrwxr-x 1 ioeX ioeX 11648196 Apr 20 11:50 node*
-    -rw-r--r-- 1 ioeX ioeX   274432 Apr 20 17:19 wallet.db
+    drwxrwxr-x 4 ioex ioex     4096 Apr 20 17:19 ./
+    drwxrwxr-x 5 ioex ioex     4096 Apr 20 11:50 ../
+    drwxr-xr-x 2 ioex ioex     4096 Apr 20 12:08 Chain/
+    -rw-rw-r-- 1 ioex ioex       34 Apr 20 11:51 cli-config.json
+    -rw-rw-r-- 1 ioex ioex     1088 Apr 20 12:02 config.json
+    -rwxrwxr-x 1 ioex ioex 13565344 Apr 20 11:51 ioex-cli*
+    -rw-rw-r-- 1 ioex ioex      444 Apr 20 12:01 keystore.dat
+    drwxrw-r-- 2 ioex ioex     4096 Apr 20 12:07 Log/
+    -rwxrwxr-x 1 ioex ioex 11648196 Apr 20 11:50 ioex*
+    -rw-r--r-- 1 ioex ioex   274432 Apr 20 17:19 wallet.db
     ```
 
-   * `node` 是链节点的启动程序，相应的配置文件为 `config.json`。
+   * `ioex` 是链节点的启动程序，相应的配置文件为 `config.json`。
 
    * `ioex-cli` 是一个命令行管理工具，可以用来创建钱包，转账和查看区块数据，配置文件为`cli-config.json`。
 
@@ -40,12 +40,12 @@
 
    * 链节点和命令行客户端代码和编译方法以及配置和命令行参数可以参考：
 
-     * [ioeX.MainChain](https://github.com/ioeX/ioeX.MainChain/blob/master/README.md)
-     * [ioeX.Client](https://github.com/ioeX/ioeX.Client/blob/master/README.md)
+     * [ioeX.MainChain](http://git.pin2wall.com/ioeXNetwork/ioeX.MainChain/blob/master/README.md)
+     * [ioeX.Client](http://git.pin2wall.com/ioeXNetwork/ioeX.Client/blob/master/README.md)
 
-2. 默认情况下分配给你的节点服务器会连接到一个专门用于开发的一组节点服务器，自动挖矿并且把所获取的币发送到本地的钱包中；你可以参考 [ioeX.Client](https://github.com/ioeX/ioeX.Client/blob/master/README.md) 中的相关查询命令进行查询或者其他操作。
+2. 默认情况下分配给你的节点服务器会连接到一个专门用于开发的一组节点服务器，自动挖矿并且把所获取的币发送到本地的钱包中；你可以参考 [ioeX.Client](http://git.pin2wall.com/ioeXNetwork/ioeX.Client/blob/master/README.md) 中的相关查询命令进行查询或者其他操作。
 
-   备注：部分命令行操作需要提供一个钱包密码，默认是 `ioeX`。
+   备注：部分命令行操作需要提供一个钱包密码，默认是 `ioex`。
 
 3. 节点服务器使用如下端口提供服务：
 
@@ -62,7 +62,7 @@
 
 可参考API示例：
 
-* [ioeX_Wallet_Node_API](ioeX_Wallet_Node_API_CN.md)
+* [IOEX_Wallet_Node_API](IOEX_Wallet_Node_API_CN.md)
 
 ## IOEX钱包服务
 
@@ -78,16 +78,16 @@
     notification:
     ```
 
-3. 上面的这些服务的应用程序都在 `/data/www/` 目录下并使用 `xxxx.test.ioeX.org` 作为目录名称；目前所有服务都是使用 `supervisor` 进行管理，相关配置文件在 `/etc/supervisor/conf.d` 目录下，可以使用 `supervisorctl [start|stop|restart] <service_name>` 来启动或者停止某个服务：
+3. 上面的这些服务的应用程序都在 `/data/www/` 目录下并使用 `xxxx.test.ioex.org` 作为目录名称；目前所有服务都是使用 `supervisor` 进行管理，相关配置文件在 `/etc/supervisor/conf.d` 目录下，可以使用 `supervisorctl [start|stop|restart] <service_name>` 来启动或者停止某个服务：
 
     ```bash
-    supervisorctl stop worker.test.ioeX.org
+    supervisorctl stop worker.test.ioex.org
 
     supervisorctl restart all
     ```
 
    使用 `supervisor` 管理服务的详细文档可以在 [这里](http://www.supervisord.org/) 查看。
 
-4. IOEX钱包的 `web` 服务器使用 `nginx`, 相关配置文件在 `/etc/nginx/conf.d` 目录。
+4. ELA钱包的 `web` 服务器使用 `nginx`, 相关配置文件在 `/etc/nginx/conf.d` 目录。
 
    开发环境的 `https` 服务使用了自签名的证书，所以使用浏览器进行访问时需要手动添加一下对证书的信任，另外分配的开发环境默认不会使用标准的`80` `443`端口，所以访问时候要加上相应的端口。
