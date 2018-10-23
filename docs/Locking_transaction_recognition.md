@@ -1,4 +1,4 @@
-# ELA Locking transaction recognition
+# IOEX Locking transaction recognition
 
 ## UTXO Lock
 

@@ -76,9 +76,9 @@ const page = `
 
 <table class="font" border="0" width="80%">
 	<tr>
-	<td width="26%" align="left"><a href="https://www.elastos.org/blog/" class="site">forum : https://www.elastos.org/blog</a><br></td>
-	<td width="26%" align="center"><a href="https://www.elastos.org" class="site">site : https://www.elastos.org</a></td>
-	<td width="28%" align="right"><a href="https://www.elastos.org/documents" class="site">doc : https://www.elastos.org/documents</a></td>
+	<td width="26%" align="left"><a href="https://www.ioex.co/blog/" class="site">forum : https://www.ioex.co/blog</a><br></td>
+	<td width="26%" align="center"><a href="https://www.ioex.co" class="site">site : https://www.ioex.co</a></td>
+	<td width="28%" align="right"><a href="https://www.ioex.co/documents" class="site">doc : https://www.ioex.co/documents</a></td>
 	</tr>
 </table>
 <br><br><br><br>

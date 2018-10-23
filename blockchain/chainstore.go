@@ -13,7 +13,7 @@ import (
 
 	. "github.com/ioeXNetwork/ioeX.Utility/common"
 
-	"github.com/elastos/Elastos.ELA/config"
+	"github.com/ioeXNetwork/ioeX.MainChain/config"
 )
 
 const ValueNone = 0

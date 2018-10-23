@@ -1,8 +1,8 @@
 # The Node API Of IOEX Wallet
 
-`IOEX Node` 使用 `2*334` 端口提供如下接口服务：
+`IOEX Node` 使用 `2*334` 埠提供如下介面服務：
 
-* `/api/v1/node/connectioncount` : 获取当前节点所连接到的节点数量
+* `/api/v1/node/connectioncount` : 獲取當前節點所連接到的節點數量
 
    示例：
 
@@ -15,7 +15,7 @@
     }
     ```
 
-* `/api/v1/node/state` : 获取当前节点状态
+* `/api/v1/node/state` : 獲取當前節點狀態
 
    示例：
 
@@ -63,7 +63,7 @@
     }
     ```
 
-* `/api/v1/block/height` : 获取节点区块总高度
+* `/api/v1/block/height` : 獲取節點區塊總高度
 
    示例：
 
@@ -76,7 +76,7 @@
     }
     ```
 
-* `/api/v1/transactionpool` : 获取节点交易池数据
+* `/api/v1/transactionpool` : 獲取節點交易池資料
 
     示例：
 
@@ -128,9 +128,9 @@
     }
     ```
 
-* `/api/v1/restart` : 重新启动节点restful服务
+* `/api/v1/restart` : 重新開機節點restful服務
 
-* `/api/v1/block/hash/<height>` : 根据区块 `height` 获取区块 `hash`
+* `/api/v1/block/hash/<height>` : 根據區塊 `height` 獲取區塊 `hash`
 
     示例：
 
@@ -143,7 +143,7 @@
     }
     ```
 
-* `/api/v1/block/details/height/<height>` : 根据区块 `height` 获取区块详细信息
+* `/api/v1/block/details/height/<height>` : 根據區塊 `height` 獲取區塊詳細資訊
 
     示例：
 
@@ -215,7 +215,7 @@
     }
     ```
 
-* `/api/v1/block/details/hash/<hash>` : 根据区块 `hash` 获取区块详细信息
+* `/api/v1/block/details/hash/<hash>` : 根據區塊 `hash` 獲取區塊詳細資訊
 
     示例：
 
@@ -248,7 +248,7 @@
     }
     ```
 
-* `/api/v1/block/transactions/height/<height>` : 根据区块 `height` 获取区块所有交易 `hash`
+* `/api/v1/block/transactions/height/<height>` : 根據區塊 `height` 獲取區塊所有交易 `hash`
 
    示例：
 
@@ -265,7 +265,7 @@
     }
     ```
     
-* `/api/v1/transaction/<hash>` : 根据交易 `hash` 获取区块所有交易信息
+* `/api/v1/transaction/<hash>` : 根據交易 `hash` 獲取區塊所有交易資訊
 
     示例：
 
@@ -317,7 +317,7 @@
     }
     ```
 
-* `/api/v1/asset/balances/<addr>` : 根据钱包地址获取钱包余额
+* `/api/v1/asset/balances/<addr>` : 根據錢包位址獲取錢包餘額
 
     示例：
 
@@ -330,7 +330,7 @@
     }
     ```
 
-* `/api/v1/asset/<hash>` : 资产查询
+* `/api/v1/asset/<hash>` : 資產查詢
 
     示例：
 
@@ -349,7 +349,7 @@
     }
     ```
 
-* `/api/v1/asset/utxos/<addr>` : 获取一个地址所有 `UTXO`
+* `/api/v1/asset/utxos/<addr>` : 獲取一個位址所有 `UTXO`
 
     示例：
 
@@ -374,7 +374,7 @@
     }
     ```
 
-* `/api/v1/asset/balance/<addr>/<assetid>` : 根据地址和AssetID查询余额
+* `/api/v1/asset/balance/<addr>/<assetid>` : 根據地址和AssetID查詢餘額
 
     示例：
 
@@ -387,7 +387,7 @@
     }
     ```
 
-* `/api/v1/asset/utxo/<addr>/<assetid>` : 根据地址和AssetID查询UTXO
+* `/api/v1/asset/utxo/<addr>/<assetid>` : 根據地址和AssetID查詢UTXO
 
     示例：
 
@@ -408,7 +408,7 @@
     }
     ```
 
-* `/api/v1/transaction` : 将签名后的交易数据广播至节点
+* `/api/v1/transaction` : 將簽名後的交易資料廣播至節點
 
     示例：
 
