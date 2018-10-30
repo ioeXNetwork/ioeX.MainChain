@@ -204,7 +204,7 @@ func (pow *PowService) DiscreteMining(n uint32) ([]*common.Uint256, error) {
 	pow.discreteMining = true
 	pow.Mutex.Unlock()
 
-	log.Tracef("Pow generating %d blocks", n)
+	log.Debugf("Pow generating %d blocks", n)
 	i := uint32(0)
 	blockHashes := make([]*common.Uint256, 0)
 	//ticker := time.NewTicker(time.Second * hashUpdateSecs)
@@ -212,11 +212,11 @@ func (pow *PowService) DiscreteMining(n uint32) ([]*common.Uint256, error) {
 	defer ticker.Stop()
 
 	for {
-		log.Trace("<================Discrete Mining==============>\n")
+		log.Debug("<================Discrete Mining==============>\n")
 
 		msgBlock, err := pow.GenerateBlock(pow.PayToAddr)
 		if err != nil {
-			log.Trace("generage block err", err)
+			log.Debug("generage block err", err)
 			continue
 		}
 
@@ -224,7 +224,7 @@ func (pow *PowService) DiscreteMining(n uint32) ([]*common.Uint256, error) {
 			if msgBlock.Header.Height == DefaultLedger.Blockchain.GetBestHeight()+1 {
 				inMainChain, isOrphan, err := DefaultLedger.Blockchain.AddBlock(msgBlock)
 				if err != nil {
-					log.Trace(err)
+					log.Debug(err)
 					continue
 				}
 				//TODO if co-mining condition
@@ -251,11 +251,11 @@ func (pow *PowService) SolveBlock(MsgBlock *Block, ticker *time.Ticker) bool {
 	// fake a btc blockheader and coinbase
 	auxPow := auxpow.GenerateAuxPow(MsgBlock.Hash())
 	header := MsgBlock.Header
-	log.Tracef("header.Bits %08x", header.Bits) //hungjiun
+	log.Debugf("header.Bits %08x", header.Bits) //hungjiun
 	targetDifficulty := CompactToBig(header.Bits)
-	log.Tracef("targetDifficulty %064x", targetDifficulty) //hungjiun
+	log.Debugf("targetDifficulty %064x", targetDifficulty) //hungjiun
 
-	log.Trace("time start", time.Now()) //hungjiun
+	log.Debug("time start", time.Now()) //hungjiun
 	for i := uint32(0); i <= maxNonce; i++ {
 		/*
 			select {
@@ -274,9 +274,9 @@ func (pow *PowService) SolveBlock(MsgBlock *Block, ticker *time.Ticker) bool {
 		auxPow.ParBlockHeader.Nonce = i
 		hash := auxPow.ParBlockHeader.Hash() // solve parBlockHeader hash
 		if HashToBig(&hash).Cmp(targetDifficulty) <= 0 {
-			log.Trace("hash : ", hash, ", i : ", i) //hungjiun
+			log.Debug("hash : ", hash, ", i : ", i) //hungjiun
 			MsgBlock.Header.AuxPow = *auxPow
-			log.Trace("time end 1", time.Now()) //hungjiun
+			log.Debug("time end 1", time.Now()) //hungjiun
 			return true
 		}
 	}
@@ -293,7 +293,7 @@ func (pow *PowService) Start() {
 	pow.Mutex.Lock()
 	defer pow.Mutex.Unlock()
 	if pow.Started || pow.discreteMining {
-		log.Trace("cpuMining is already Started")
+		log.Debug("cpuMining is already Started")
 	}
 
 	pow.quit = make(chan struct{})
@@ -353,7 +353,7 @@ func NewPowService() *PowService {
 	pow.blockPersistCompletedSubscriber = DefaultLedger.Blockchain.BCEvents.Subscribe(events.EventBlockPersistCompleted, pow.BlockPersistCompleted)
 	pow.RollbackTransactionSubscriber = DefaultLedger.Blockchain.BCEvents.Subscribe(events.EventRollbackTransaction, pow.RollbackTransaction)
 
-	log.Trace("pow Service Init succeed")
+	log.Debug("pow Service Init succeed")
 	return pow
 }
 
@@ -369,23 +369,23 @@ out:
 		default:
 			// Non-blocking select to fall through
 		}
-		log.Trace("<================Packing Block==============>")
+		log.Debug("<================Packing Block==============>")
 		//time.Sleep(15 * time.Second)
 
 		msgBlock, err := pow.GenerateBlock(pow.PayToAddr)
 		if err != nil {
-			log.Trace("generage block err", err)
+			log.Debug("generage block err", err)
 			continue
 		}
 
 		//begin to mine the block with POW
 		if pow.SolveBlock(msgBlock, ticker) {
-			log.Trace("<================Solved Block==============>")
+			log.Debug("<================Solved Block==============>")
 			//send the valid block to p2p networkd
 			if msgBlock.Header.Height == DefaultLedger.Blockchain.GetBestHeight()+1 {
 				inMainChain, isOrphan, err := DefaultLedger.Blockchain.AddBlock(msgBlock)
 				if err != nil {
-					log.Trace(err)
+					log.Debug(err)
 					continue
 				}
 				//TODO if co-mining condition

@@ -17,7 +17,6 @@ import (
 	. "github.com/ioeXNetwork/ioeX.MainChain/protocol"
 
 	. "github.com/ioeXNetwork/ioeX.Utility/common"
-	"github.com/ioeXNetwork/ioeX.Utility/p2p"
 )
 
 const (
@@ -162,8 +161,6 @@ func GetNodeState(param Params) map[string]interface{} {
 	nodes := ServerNode.GetNeighborNodes()
 	neighbors := make([]Neighbor, 0, len(nodes))
 	for _, node := range nodes {
-		var state p2p.PeerState
-		state.SetState(node.State())
 		neighbors = append(neighbors, Neighbor{
 			ID:         node.ID(),
 			HexID:      fmt.Sprintf("0x%x", node.ID()),
@@ -171,7 +168,7 @@ func GetNodeState(param Params) map[string]interface{} {
 			Services:   node.Services(),
 			Relay:      node.IsRelay(),
 			External:   node.IsExternal(),
-			State:      state.String(),
+			State:      node.State().String(),
 			NetAddress: node.NetAddress().String(),
 		})
 	}
@@ -202,9 +199,7 @@ func SetLogLevel(param Params) map[string]interface{} {
 		return ResponsePack(InvalidParams, "level must be an integer in 0-6")
 	}
 
-	if err := log.Log.SetPrintLevel(int(level)); err != nil {
-		return ResponsePack(InvalidParams, err.Error())
-	}
+	log.SetPrintLevel(uint8(level))
 	return ResponsePack(Success, fmt.Sprint("log level has been set to ", level))
 }
 
@@ -224,27 +219,27 @@ func SubmitAuxBlock(param Params) map[string]interface{} {
 	}
 	var msgAuxBlock *Block
 	if msgAuxBlock, ok = LocalPow.AuxBlockPool.GetBlock(*blockHash); !ok {
-		log.Trace("[json-rpc:SubmitAuxBlock] block hash unknown", blockHash)
+		log.Debug("[json-rpc:SubmitAuxBlock] block hash unknown", blockHash)
 		return ResponsePack(InternalError, "block hash unknown")
 	}
 
 	var aux aux.AuxPow
 	buf, _ := HexStringToBytes(auxPow)
 	if err := aux.Deserialize(bytes.NewReader(buf)); err != nil {
-		log.Trace("[json-rpc:SubmitAuxBlock] auxpow deserialization failed", auxPow)
+		log.Debug("[json-rpc:SubmitAuxBlock] auxpow deserialization failed", auxPow)
 		return ResponsePack(InternalError, "auxpow deserialization failed")
 	}
 
 	msgAuxBlock.Header.AuxPow = aux
 	_, _, err = chain.DefaultLedger.Blockchain.AddBlock(msgAuxBlock)
 	if err != nil {
-		log.Trace(err)
+		log.Debug(err)
 		return ResponsePack(InternalError, "adding block failed")
 	}
 
 	LocalPow.BroadcastBlock(msgAuxBlock)
 
-	log.Trace("AddBlock called finished and LocalPow.MsgBlock.MapNewBlock has been deleted completely")
+	log.Debug("AddBlock called finished and LocalPow.MsgBlock.MapNewBlock has been deleted completely")
 	log.Info(auxPow, blockHash)
 	return ResponsePack(Success, true)
 }

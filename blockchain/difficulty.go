@@ -69,10 +69,10 @@ func CalcNextRequiredDifficulty(prevNode *BlockNode, newBlockTime time.Time) (ui
 	// intentionally converting the bits back to a number instead of using
 	// newTarget since conversion to the compact representation loses precision.
 	newTargetBits := BigToCompact(newTarget)
-	log.Tracef("Difficulty retarget at block height %d", prevNode.Height+1)
-	log.Tracef("Old target %08x (%064x)", prevNode.Bits, oldTarget)
-	log.Tracef("New target %08x (%064x)", newTargetBits, CompactToBig(newTargetBits))
-	log.Tracef("Actual timespan %v, adjusted timespan %v, target timespan %v",
+	log.Debugf("Difficulty retarget at block height %d", prevNode.Height+1)
+	log.Debugf("Old target %08x (%064x)", prevNode.Bits, oldTarget)
+	log.Debugf("New target %08x (%064x)", newTargetBits, CompactToBig(newTargetBits))
+	log.Debugf("Actual timespan %v, adjusted timespan %v, target timespan %v",
 		time.Duration(actualTimespan)*time.Second,
 		time.Duration(adjustedTimespan)*time.Second,
 		config.Parameters.ChainParam.TargetTimespan)
@@ -135,9 +135,6 @@ func CompactToBig(compact uint32) *big.Int {
 	mantissa := compact & 0x007fffff
 	isNegative := compact&0x00800000 != 0
 	exponent := uint(compact >> 24)
-
-	log.Tracef("mantissa %x", mantissa)
-	log.Tracef("exponent %d", exponent)
 
 	// Since the base for the exponent is 256, the exponent can be treated
 	// as the number of bytes to represent the full 256-bit number.  So,

@@ -156,7 +156,6 @@ func CheckBlockContext(block *Block) error {
 	if rewardInCoinbase-totalTxFee != RewardAmountPerBlock {
 		return errors.New("reward amount in coinbase not correct")
 	}
-
 	return nil
 }
 

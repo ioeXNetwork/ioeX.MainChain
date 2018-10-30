@@ -25,9 +25,9 @@ var (
 	mainNet    = &ChainParams{
 		Name:               "MainNet",
 		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
-		PowLimitBits:       0x1f0008ff,
+		PowLimitBits:       0x1e00f8ff,
 		TargetTimePerBlock: time.Minute * 2,
-		TargetTimespan:     time.Minute * 2 * 10,
+		TargetTimespan:     time.Minute * 2 * 720,
 		AdjustmentFactor:   int64(4),
 		MaxOrphanBlocks:    10000,
 		MinMemoryNodes:     20160,
@@ -87,7 +87,7 @@ type Configuration struct {
 	NoticeServerUrl     string           `json:"NoticeServerUrl"`
 	NodePort            uint16           `json:"NodePort"`
 	NodeOpenPort        uint16           `json:"NodeOpenPort"`
-	PrintLevel          int              `json:"PrintLevel"`
+	PrintLevel          uint8            `json:"PrintLevel"`
 	IsTLS               bool             `json:"IsTLS"`
 	CertPath            string           `json:"CertPath"`
 	KeyPath             string           `json:"KeyPath"`

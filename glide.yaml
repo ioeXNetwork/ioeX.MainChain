@@ -7,9 +7,7 @@ import:
   repo: https://github.com/golang/sys.git
   vcs: git
 - package: github.com/ioeXNetwork/ioeX.Utility
-  vcs: git
-- package: github.com/ioeXNetwork/fsnotify
-  vcs: git
+  version: release_v0.1.1
 - package: github.com/gorilla/websocket
 - package: github.com/mattn/go-sqlite3
 - package: github.com/pborman/uuid
