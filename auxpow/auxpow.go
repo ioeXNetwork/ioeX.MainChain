@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	AuxPowChainID         = 1224
+	AuxPowChainID         = 1
 	pchMergedMiningHeader = []byte{0xfa, 0xbe, 'm', 'm'}
 )
 
@@ -49,26 +49,13 @@ func (ap *AuxPow) Serialize(w io.Writer) error {
 		return err
 	}
 
-	count := uint64(len(ap.ParCoinBaseMerkle))
-	err = common.WriteVarUint(w, count)
+	idx := uint32(ap.AuxMerkleIndex)
+	err = common.WriteUint32(w, idx)
 	if err != nil {
 		return err
 	}
 
-	for _, pcbm := range ap.ParCoinBaseMerkle {
-		err = pcbm.Serialize(w)
-		if err != nil {
-			return err
-		}
-	}
-
-	index := uint32(ap.ParMerkleIndex)
-	err = common.WriteUint32(w, index)
-	if err != nil {
-		return err
-	}
-
-	count = uint64(len(ap.AuxMerkleBranch))
+	count := uint64(len(ap.AuxMerkleBranch))
 	err = common.WriteVarUint(w, count)
 	if err != nil {
 		return err
@@ -81,17 +68,29 @@ func (ap *AuxPow) Serialize(w io.Writer) error {
 		}
 	}
 
-	index = uint32(ap.AuxMerkleIndex)
-	err = common.WriteUint32(w, index)
+	idx = uint32(ap.ParMerkleIndex)
+	err = common.WriteUint32(w, idx)
 	if err != nil {
 		return err
+	}
+
+	count = uint64(len(ap.ParCoinBaseMerkle))
+	err = common.WriteVarUint(w, count)
+	if err != nil {
+		return err
+	}
+
+	for _, pcbm := range ap.ParCoinBaseMerkle {
+		err = pcbm.Serialize(w)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = ap.ParBlockHeader.Serialize(w)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -106,47 +105,48 @@ func (ap *AuxPow) Deserialize(r io.Reader) error {
 		return err
 	}
 
+	temp, err := common.ReadUint32(r)
+	if err != nil {
+		return err
+	}
+	ap.AuxMerkleIndex = int(temp)
+
 	count, err := common.ReadVarUint(r, 0)
 	if err != nil {
 		return err
 	}
 
-	ap.ParCoinBaseMerkle = make([]common.Uint256, 0)
+	ap.AuxMerkleBranch = make([]common.Uint256, count)
 	for i := uint64(0); i < count; i++ {
-		var hash common.Uint256
-		err = hash.Deserialize(r)
+		temp := common.Uint256{}
+		err = temp.Deserialize(r)
 		if err != nil {
 			return err
 		}
-		ap.ParCoinBaseMerkle = append(ap.ParCoinBaseMerkle, hash)
+		ap.AuxMerkleBranch[i] = temp
 	}
 
-	index, err := common.ReadUint32(r)
+	temp, err = common.ReadUint32(r)
 	if err != nil {
 		return err
 	}
-	ap.ParMerkleIndex = int(index)
+	ap.ParMerkleIndex = int(temp)
 
 	count, err = common.ReadVarUint(r, 0)
 	if err != nil {
 		return err
 	}
 
-	ap.AuxMerkleBranch = make([]common.Uint256, 0)
+	ap.ParCoinBaseMerkle = make([]common.Uint256, count)
 	for i := uint64(0); i < count; i++ {
-		var hash common.Uint256
-		err = hash.Deserialize(r)
+		temp := common.Uint256{}
+		err = temp.Deserialize(r)
 		if err != nil {
 			return err
 		}
-		ap.AuxMerkleBranch = append(ap.AuxMerkleBranch, hash)
-	}
+		ap.ParCoinBaseMerkle[i] = temp
 
-	index, err = common.ReadUint32(r)
-	if err != nil {
-		return err
 	}
-	ap.AuxMerkleIndex = int(index)
 
 	err = ap.ParBlockHeader.Deserialize(r)
 	if err != nil {
@@ -161,21 +161,21 @@ func (ap *AuxPow) Check(hashAuxBlock *common.Uint256, chainId int) bool {
 		return false
 	}
 
-	// reverse the hashAuxBlock
-	hashAuxBlockBytes := common.BytesReverse(hashAuxBlock.Bytes())
-	hashAuxBlock, _ = common.Uint256FromBytes(hashAuxBlockBytes)
+	if len(ap.AuxMerkleBranch) > 0 {
+		hashAuxBlockBytes := common.BytesReverse(hashAuxBlock.Bytes())
+		hashAuxBlock, _ = common.Uint256FromBytes(hashAuxBlockBytes)
+	}
 
-	auxRootHash := GetMerkleRoot(*hashAuxBlock, ap.AuxMerkleBranch, ap.AuxMerkleIndex)
+	auxRootHashReverse := GetMerkleRoot(*hashAuxBlock, ap.AuxMerkleBranch, ap.AuxMerkleIndex)
 
 	script := ap.ParCoinbaseTx.TxIn[0].SignatureScript
 	scriptStr := hex.EncodeToString(script)
-
-	// reverse the auxRootHash
-	auxRootHashReverseStr := hex.EncodeToString(common.BytesReverse(auxRootHash.Bytes()))
+	//fixme reverse
+	auxRootHashStr := hex.EncodeToString(auxRootHashReverse.Bytes())
 	pchMergedMiningHeaderStr := hex.EncodeToString(pchMergedMiningHeader)
 
 	headerIndex := strings.Index(scriptStr, pchMergedMiningHeaderStr)
-	rootHashIndex := strings.Index(scriptStr, auxRootHashReverseStr)
+	rootHashIndex := strings.Index(scriptStr, auxRootHashStr)
 
 	if (headerIndex == -1) || (rootHashIndex == -1) {
 		return false
@@ -189,7 +189,7 @@ func (ap *AuxPow) Check(hashAuxBlock *common.Uint256, chainId int) bool {
 		return false
 	}
 
-	rootHashIndex += len(auxRootHashReverseStr)
+	rootHashIndex += len(auxRootHashStr)
 	if len(scriptStr)-rootHashIndex < 8 {
 		return false
 	}

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"bytes"
 	"errors"
 	"io"
 
@@ -9,41 +8,31 @@ import (
 )
 
 type PayloadTransferCrossChainAsset struct {
-	CrossChainAddresses []string
-	OutputIndexes       []uint64
-	CrossChainAmounts   []common.Fixed64
+	// string: publickey; uint64: output index
+	AddressesMap map[string]uint64
 }
 
 func (a *PayloadTransferCrossChainAsset) Data(version byte) []byte {
-	buf := new(bytes.Buffer)
-	if err := a.Serialize(buf, version); err != nil {
-		return []byte{0}
-	}
-
-	return buf.Bytes()
+	//TODO: implement TransferCrossChainAsset.Data()
+	return []byte{0}
 }
 
 func (a *PayloadTransferCrossChainAsset) Serialize(w io.Writer, version byte) error {
-	if len(a.CrossChainAddresses) != len(a.OutputIndexes) || len(a.OutputIndexes) != len(a.CrossChainAmounts) {
-		return errors.New("Invalid cross chain asset")
+	if a.AddressesMap == nil {
+		return errors.New("Invalid address map")
 	}
 
-	if err := common.WriteVarUint(w, uint64(len(a.CrossChainAddresses))); err != nil {
-		return errors.New("PayloadTransferCrossChainAsset length serialize failed")
+	if err := common.WriteVarUint(w, uint64(len(a.AddressesMap))); err != nil {
+		return errors.New("address map's length serialize failed")
 	}
 
-	for i := 0; i < len(a.CrossChainAddresses); i++ {
-		if err := common.WriteVarString(w, a.CrossChainAddresses[i]); err != nil {
-			return errors.New("CrossChainAddresses serialize failed")
+	for k, v := range a.AddressesMap {
+		if err := common.WriteVarString(w, k); err != nil {
+			return errors.New("address map's key serialize failed")
 		}
 
-		if err := common.WriteVarUint(w, a.OutputIndexes[i]); err != nil {
-			return errors.New("OutputIndexes serialize failed")
-		}
-
-		err := a.CrossChainAmounts[i].Serialize(w)
-		if err != nil {
-			return errors.New("CrossChainAmounts serialize failed")
+		if err := common.WriteVarUint(w, v); err != nil {
+			return errors.New("address map's index serialize failed")
 		}
 	}
 
@@ -53,29 +42,23 @@ func (a *PayloadTransferCrossChainAsset) Serialize(w io.Writer, version byte) er
 func (a *PayloadTransferCrossChainAsset) Deserialize(r io.Reader, version byte) error {
 	length, err := common.ReadVarUint(r, 0)
 	if err != nil {
-		return errors.New("PayloadTransferCrossChainAsset length deserialize failed")
+		return errors.New("address map's length deserialize failed")
 	}
 
+	a.AddressesMap = nil
+	a.AddressesMap = make(map[string]uint64)
 	for i := uint64(0); i < length; i++ {
-		address, err := common.ReadVarString(r)
+		k, err := common.ReadVarString(r)
 		if err != nil {
-			return errors.New("CrossChainAddresses deserialize failed")
+			return errors.New("address map's key deserialize failed")
 		}
 
 		index, err := common.ReadVarUint(r, 0)
 		if err != nil {
-			return errors.New("OutputIndexes index deserialize failed")
+			return errors.New("address map's index deserialize failed")
 		}
 
-		var amount common.Fixed64
-		err = amount.Deserialize(r)
-		if err != nil {
-			return errors.New("CrossChainAmounts deserialize failed")
-		}
-
-		a.CrossChainAddresses = append(a.CrossChainAddresses, address)
-		a.OutputIndexes = append(a.OutputIndexes, index)
-		a.CrossChainAmounts = append(a.CrossChainAmounts, amount)
+		a.AddressesMap[k] = index
 	}
 
 	return nil

@@ -9,7 +9,6 @@ import (
 	"github.com/ioeXNetwork/ioeX.MainChain/auxpow"
 	"github.com/ioeXNetwork/ioeX.MainChain/core"
 	"github.com/ioeXNetwork/ioeX.Utility/common"
-	"github.com/ioeXNetwork/ioeX.Utility/p2p/msg"
 )
 
 func TestMerkleBlock_GetTxMerkleBranch(t *testing.T) {
@@ -47,8 +46,8 @@ func run(txs uint32) {
 
 	merkleRoot := *mBlock.CalcHash(treeDepth(txs), 0)
 	// Create and return the merkle block.
-	merkleBlock := msg.MerkleBlock{
-		Header: &core.Header{
+	merkleBlock := MerkleBlock{
+		Header: core.Header{
 			MerkleRoot: merkleRoot,
 		},
 		Transactions: mBlock.NumTx,
@@ -69,7 +68,7 @@ func run(txs uint32) {
 	}
 
 	for i := range txIds {
-		mb, err := GetTxMerkleBranch(merkleBlock, txIds[i])
+		mb, err := merkleBlock.GetTxMerkleBranch(txIds[i])
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(0)

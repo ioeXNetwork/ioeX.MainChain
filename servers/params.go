@@ -2,16 +2,14 @@ package servers
 
 import (
 	"strconv"
-
-	"github.com/ioeXNetwork/ioeX.MainChain/log"
 )
 
 type Params map[string]interface{}
 
-func FromArray(array []interface{}, fields ...string) Params {
+func FromArray(array []interface{}, fileds ...string) Params {
 	params := make(Params)
 	for i := 0; i < len(array); i++ {
-		params[fields[i]] = array[i]
+		params[fileds[i]] = array[i]
 	}
 	return params
 }
@@ -100,29 +98,5 @@ func (p Params) String(key string) (string, bool) {
 		return v, true
 	default:
 		return "", false
-	}
-}
-
-func (p Params) ArrayString(key string) ([]string, bool) {
-	value, ok := p[key]
-	if !ok {
-		return nil, false
-	}
-	switch v := value.(type) {
-	case []interface{}:
-
-		var arrayString []string
-		for _, param := range v {
-			paramString, ok := param.(string)
-			if !ok {
-				log.Info("param", param, " is not a string")
-				return nil, false
-			}
-			arrayString = append(arrayString, paramString)
-		}
-		return arrayString, true
-
-	default:
-		return nil, false
 	}
 }

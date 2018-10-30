@@ -1,7 +1,6 @@
 package core
 
 import (
-	"bytes"
 	"errors"
 	"io"
 
@@ -94,10 +93,4 @@ func (a *Asset) Deserialize(r io.Reader) error {
 		return errors.New("[Asset], RecordType deserialize failed.")
 	}
 	return nil
-}
-
-func (a *Asset) Hash() common.Uint256 {
-	buf := new(bytes.Buffer)
-	a.Serialize(buf)
-	return common.Sha256D(buf.Bytes())
 }

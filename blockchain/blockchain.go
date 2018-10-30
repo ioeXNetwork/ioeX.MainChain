@@ -13,6 +13,7 @@ import (
 
 	"github.com/ioeXNetwork/ioeX.MainChain/config"
 	. "github.com/ioeXNetwork/ioeX.MainChain/core"
+	. "github.com/ioeXNetwork/ioeX.MainChain/errors"
 	"github.com/ioeXNetwork/ioeX.MainChain/events"
 	"github.com/ioeXNetwork/ioeX.MainChain/log"
 
@@ -121,13 +122,17 @@ func GetGenesisBlock() (*Block, error) {
 		Outputs:    []*Output{},
 		Programs:   []*Program{},
 	}
+	foundation, err := Uint168FromAddress(FoundationAddress)
+	if err != nil {
+		return nil, err
+	}
 
 	coinBase := NewCoinBaseTransaction(&PayloadCoinBase{}, 0)
 	coinBase.Outputs = []*Output{
 		{
 			AssetID:     ioeXCoin.Hash(),
 			Value:       20000 * 10000 * 100000000,
-			ProgramHash: FoundationAddress,
+			ProgramHash: *foundation,
 		},
 	}
 
@@ -145,7 +150,6 @@ func GetGenesisBlock() (*Block, error) {
 	for _, tx := range block.Transactions {
 		hashes = append(hashes, tx.Hash())
 	}
-	var err error
 	block.Header.MerkleRoot, err = crypto.ComputeRoot(hashes)
 	if err != nil {
 		return nil, errors.New("[GenesisBlock] ,BuildMerkleRoot failed.")
@@ -181,6 +185,8 @@ func (bc *Blockchain) GetBestHeight() uint32 {
 }
 
 func (bc *Blockchain) UpdateBestHeight(val uint32) {
+	//bc.mutex.Lock()
+	//defer bc.mutex.Unlock()
 	bc.BlockHeight = val
 }
 
@@ -786,6 +792,8 @@ func (bc *Blockchain) DisconnectBlock(node *BlockNode, block *Block) error {
 	// Notify the caller that the block was disconnected from the main
 	// chain.  The caller would typically want to react with actions such as
 	// updating wallets.
+	//TODO
+	//bc.sendNotification(NTBlockDisconnected, block)
 
 	return nil
 }
@@ -794,10 +802,11 @@ func (bc *Blockchain) DisconnectBlock(node *BlockNode, block *Block) error {
 // (best) chain.
 func (bc *Blockchain) ConnectBlock(node *BlockNode, block *Block) error {
 
-	err := CheckBlockContext(block)
-	if err != nil {
-		log.Errorf("PowCheckBlockSanity error %s", err.Error())
-		return err
+	for _, txVerify := range block.Transactions {
+		if errCode := CheckTransactionContext(txVerify); errCode != Success {
+			fmt.Println("CheckTransactionContext failed when verify block", errCode)
+			return errors.New(fmt.Sprintf("CheckTransactionContext failed when verify block"))
+		}
 	}
 
 	// Make sure it's extending the end of the best chain.
@@ -808,7 +817,7 @@ func (bc *Blockchain) ConnectBlock(node *BlockNode, block *Block) error {
 	}
 
 	// Insert the block into the database which houses the main chain.
-	err = DefaultLedger.Store.SaveBlock(block)
+	err := DefaultLedger.Store.SaveBlock(block)
 	if err != nil {
 		return err
 	}
@@ -1028,8 +1037,9 @@ func (bc *Blockchain) ProcessBlock(block *Block) (bool, bool, error) {
 	// Perform preliminary sanity checks on the block and its transactions.
 	//err = PowCheckBlockSanity(block, PowLimit, bc.TimeSource)
 	err := PowCheckBlockSanity(block, config.Parameters.ChainParam.PowLimit, bc.TimeSource)
+
 	if err != nil {
-		log.Errorf("PowCheckBlockSanity error %s", err.Error())
+		log.Error("PowCheckBlockSanity error!")
 		return false, false, err
 	}
 
@@ -1114,20 +1124,17 @@ func (b *Blockchain) LatestBlockLocator() ([]*Uint256, error) {
 	// The best chain is set, so use its hash.
 	return b.blockLocatorFromHash(b.BestChain.Hash), nil
 }
-
 func (b *Blockchain) AddNodeToIndex(node *BlockNode) {
 	b.IndexLock.Lock()
 	defer b.IndexLock.Unlock()
 
 	b.Index[*node.Hash] = node
 }
-
 func (b *Blockchain) RemoveNodeFromIndex(node *BlockNode) {
 	b.IndexLock.Lock()
 	defer b.IndexLock.Unlock()
 	delete(b.Index, *node.Hash)
 }
-
 func (b *Blockchain) LookupNodeInIndex(hash *Uint256) (*BlockNode, bool) {
 	b.IndexLock.Lock()
 	defer b.IndexLock.Unlock()

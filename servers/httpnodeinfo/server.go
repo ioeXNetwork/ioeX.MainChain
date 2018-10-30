@@ -33,20 +33,20 @@ var templates = template.Must(template.New("info").Parse(page))
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	var ngbrNodersInfo []NgbNodeInfo
-	var node = servers.ServerNode
+	var node = servers.NodeForServers
 
-	neighbors := node.GetNeighborNodes()
+	ngbrNoders := node.GetNeighborNoder()
 
-	for i := 0; i < len(neighbors); i++ {
+	for i := 0; i < len(ngbrNoders); i++ {
 		ngbrNodersInfo = append(ngbrNodersInfo, NgbNodeInfo{
-			NgbId:   fmt.Sprintf("0x%x", neighbors[i].ID()),
-			NbrAddr: neighbors[i].Addr(),
+			NgbId:   fmt.Sprintf("0x%x", ngbrNoders[i].ID()),
+			NbrAddr: ngbrNoders[i].Addr(),
 		})
 	}
 
 	pageInfo := &Info{
 		BlockHeight:  chain.DefaultLedger.Blockchain.BlockHeight,
-		NeighborCnt:  len(neighbors),
+		NeighborCnt:  len(ngbrNoders),
 		Neighbors:    ngbrNodersInfo,
 		HttpRestPort: config.Parameters.HttpRestPort,
 		HttpWsPort:   config.Parameters.HttpWsPort,

@@ -3,7 +3,6 @@ package config
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -26,37 +25,34 @@ var (
 		Name:               "MainNet",
 		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
 		PowLimitBits:       0x1f0008ff,
-		TargetTimePerBlock: time.Minute * 2,
-		TargetTimespan:     time.Minute * 2 * 10,
+		TargetTimespan:     time.Second * 60 * 2 * 720,
+		TargetTimePerBlock: time.Second * 60 * 2,
 		AdjustmentFactor:   int64(4),
 		MaxOrphanBlocks:    10000,
 		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain",
+		SpendCoinbaseSpan:  100,
 	}
 	testNet = &ChainParams{
 		Name:               "TestNet",
 		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
 		PowLimitBits:       0x1e1da5ff,
-		TargetTimePerBlock: time.Second * 10,
 		TargetTimespan:     time.Second * 10 * 10,
+		TargetTimePerBlock: time.Second * 10,
 		AdjustmentFactor:   int64(4),
 		MaxOrphanBlocks:    10000,
 		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain/TestNet",
+		SpendCoinbaseSpan:  100,
 	}
 	regNet = &ChainParams{
 		Name:               "RegNet",
 		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
 		PowLimitBits:       0x207fffff,
-		TargetTimePerBlock: time.Second * 1,
 		TargetTimespan:     time.Second * 1 * 10,
+		TargetTimePerBlock: time.Second * 1,
 		AdjustmentFactor:   int64(4),
 		MaxOrphanBlocks:    10000,
 		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain/RegNet",
+		SpendCoinbaseSpan:  100,
 	}
 )
 
@@ -74,7 +70,6 @@ type Configuration struct {
 	Version             int              `json:"Version"`
 	SeedList            []string         `json:"SeedList"`
 	HttpRestPort        int              `json:"HttpRestPort"`
-	MinCrossChainTxFee  int              `json:"MinCrossChainTxFee"`
 	RestCertPath        string           `json:"RestCertPath"`
 	RestKeyPath         string           `json:"RestKeyPath"`
 	HttpInfoPort        uint16           `json:"HttpInfoPort"`
@@ -95,7 +90,7 @@ type Configuration struct {
 	MultiCoreNum        uint             `json:"MultiCoreNum"`
 	MaxLogsSize         int64            `json:"MaxLogsSize"`
 	MaxPerLogSize       int64            `json:"MaxPerLogSize"`
-	MaxTxsInBlock       int              `json:"MaxTransactionInBlock"`
+	MaxTxInBlock        int              `json:"MaxTransactionInBlock"`
 	MaxBlockSize        int              `json:"MaxBlockSize"`
 	PowConfiguration    PowConfiguration `json:"PowConfiguration"`
 	Arbiters            []string         `json:"Arbiters"`
@@ -109,13 +104,12 @@ type ChainParams struct {
 	Name               string
 	PowLimit           *big.Int
 	PowLimitBits       uint32
-	TargetTimePerBlock time.Duration
 	TargetTimespan     time.Duration
+	TargetTimePerBlock time.Duration
 	AdjustmentFactor   int64
 	MaxOrphanBlocks    int
 	MinMemoryNodes     uint32
-	CoinbaseLockTime   uint32
-	ChainStorePath     string
+	SpendCoinbaseSpan  uint32
 }
 
 type configParams struct {
@@ -151,10 +145,6 @@ func init() {
 
 func (config *Configuration) GetArbitrators() ([][]byte, error) {
 	//todo finish this when arbitrator election scenario is done
-	if len(config.Arbiters) == 0 {
-		return nil, errors.New("arbiters not configured")
-	}
-
 	var arbitersByte [][]byte
 	for _, arbiter := range config.Arbiters {
 		arbiterByte, err := common.HexStringToBytes(arbiter)

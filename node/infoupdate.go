@@ -15,49 +15,16 @@ import (
 	"github.com/ioeXNetwork/ioeX.Utility/p2p/msg/v0"
 )
 
-type syncTimer struct {
-	timeout    time.Duration
-	lastUpdate time.Time
-	quit       chan struct{}
-	onTimeout  func()
-}
-
-func newSyncTimer(onTimeout func()) *syncTimer {
-	return &syncTimer{
-		timeout:   time.Second * SyncBlockTimeout,
-		onTimeout: onTimeout,
-	}
-}
-
-func (t *syncTimer) start() {
-	go func() {
-		t.quit = make(chan struct{}, 1)
-		ticker := time.NewTicker(time.Millisecond * 25)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				if time.Now().After(t.lastUpdate.Add(t.timeout)) {
-					t.onTimeout()
-					goto QUIT
-				}
-			case <-t.quit:
-				goto QUIT
-			}
+func (node *node) hasSyncPeer() (bool, Noder) {
+	LocalNode.nbrNodes.RLock()
+	defer LocalNode.nbrNodes.RUnlock()
+	noders := LocalNode.GetNeighborNoder()
+	for _, n := range noders {
+		if n.IsSyncHeaders() {
+			return true, n
 		}
-	QUIT:
-		t.quit = nil
-	}()
-}
-
-func (t *syncTimer) update() {
-	t.lastUpdate = time.Now()
-}
-
-func (t *syncTimer) stop() {
-	if t.quit != nil {
-		t.quit <- struct{}{}
 	}
+	return false, nil
 }
 
 func (node *node) SyncBlocks() {
@@ -67,48 +34,49 @@ func (node *node) SyncBlocks() {
 	chain.DefaultLedger.Blockchain.DumpState()
 	bc := chain.DefaultLedger.Blockchain
 	log.Info("[", len(bc.Index), len(bc.BlockCache), len(bc.Orphans), "]")
-	if needSync {
-		syncNode := LocalNode.GetSyncNode()
-		if syncNode == nil {
+	if needSync == false {
+		LocalNode.SetSyncHeaders(false)
+		syncNode, err := node.FindSyncNode()
+		if err == nil {
+			syncNode.SetSyncHeaders(false)
+			LocalNode.SetStartHash(EmptyHash)
+			LocalNode.SetStopHash(EmptyHash)
+		}
+		LocalNode.ResetRequestedBlock()
+	} else {
+		hasSyncPeer, syncNode := LocalNode.hasSyncPeer()
+		if hasSyncPeer == false {
 			LocalNode.ResetRequestedBlock()
-			syncNode = node.GetBestNode()
-			if syncNode == nil {
-				return
-			}
+			syncNode = node.GetBestHeightNoder()
 			hash := chain.DefaultLedger.Store.GetCurrentBlockHash()
 			locator := chain.DefaultLedger.Blockchain.BlockLocatorFromHash(&hash)
 
 			SendGetBlocks(syncNode, locator, EmptyHash)
-			LocalNode.SetSyncHeaders(true)
-			syncNode.SetSyncHeaders(true)
-			// Start sync timer
-			LocalNode.syncTimer.start()
 		} else if syncNode.Version() < p2p.EIP001Version {
 			list := LocalNode.GetRequestBlockList()
-			var requests = make(map[Uint256]time.Time)
+			var requests = make(map[Uint256]time.Time, p2p.MaxHeaderHashes)
+			x := 1
 			node.requestedBlockLock.Lock()
 			for i, v := range list {
-				requests[i] = v
-				if len(requests) >= p2p.MaxHeaderHashes {
+				if x == p2p.MaxHeaderHashes {
 					break
 				}
+				requests[i] = v
+				x += 1
 			}
 			node.requestedBlockLock.Unlock()
 			if len(requests) == 0 {
 				syncNode.SetSyncHeaders(false)
 				LocalNode.SetStartHash(EmptyHash)
 				LocalNode.SetStopHash(EmptyHash)
-				syncNode := node.GetBestNode()
-				if syncNode == nil {
-					return
-				}
+				syncNode := node.GetBestHeightNoder()
 				hash := chain.DefaultLedger.Store.GetCurrentBlockHash()
 				locator := chain.DefaultLedger.Blockchain.BlockLocatorFromHash(&hash)
 
 				SendGetBlocks(syncNode, locator, EmptyHash)
 			} else {
-				for hash, t := range requests {
-					if time.Now().After(t.Add(time.Second * 3)) {
+				for hash := range requests {
+					if requests[hash].Before(time.Now().Add(-3 * time.Second)) {
 						log.Infof("request block hash %x ", hash.Bytes())
 						LocalNode.AddRequestedBlock(hash)
 						syncNode.Send(v0.NewGetData(hash))
@@ -116,87 +84,119 @@ func (node *node) SyncBlocks() {
 				}
 			}
 		}
-	} else {
-		LocalNode.stopSyncing()
 	}
 }
 
-func (node *node) stopSyncing() {
-	// Stop sync timer
-	LocalNode.syncTimer.stop()
-	LocalNode.SetSyncHeaders(false)
-	LocalNode.SetStartHash(EmptyHash)
-	LocalNode.SetStopHash(EmptyHash)
-	syncNode := node.GetSyncNode()
-	if syncNode != nil {
-		syncNode.SetSyncHeaders(false)
+func (node *node) SendPingToNbr() {
+	noders := LocalNode.GetNeighborNoder()
+	for _, n := range noders {
+		if n.State() == p2p.ESTABLISH {
+			n.Send(msg.NewPing(chain.DefaultLedger.Store.GetHeight()))
+		}
 	}
 }
 
-func (node *node) Heartbeat() {
-	ticker := time.NewTicker(time.Second * HeartbeatDuration)
-	defer ticker.Stop()
-	for range ticker.C {
-		// quit when node disconnected
-		if node.State() == p2p.INACTIVITY {
-			goto QUIT
+func (node *node) HeartBeatMonitor() {
+	noders := LocalNode.GetNeighborNoder()
+	periodUpdateTime := config.DefaultGenBlockTime / TimesOfUpdateTime
+	for _, n := range noders {
+		if n.State() == p2p.ESTABLISH {
+			t := n.GetLastActiveTime()
+			if t.Before(time.Now().Add(-1 * time.Second * time.Duration(periodUpdateTime) * KeepAliveTimeout)) {
+				log.Warn("keepalive timeout!!!")
+				n.SetState(p2p.INACTIVITY)
+				n.CloseConn()
+			}
 		}
-
-		// quit when node keep alive timeout
-		if time.Now().After(node.lastActive.Add(time.Second * KeepAliveTimeout)) {
-			log.Warn("keepalive timeout!!!")
-			node.SetState(p2p.INACTIVITY)
-			node.CloseConn()
-			goto QUIT
-		}
-
-		// send ping message to node
-		node.Send(msg.NewPing(chain.DefaultLedger.Store.GetHeight()))
-	}
-QUIT:
-}
-
-func (node *node) RequireNeighbourList() {
-	// Do not request addresses from external node
-	if node.IsExternal() {
-		return
-	}
-
-	node.Send(new(msg.GetAddr))
-}
-
-func (node *node) ConnectNodes() {
-	log.Debug()
-	internal, total := node.GetConnectionCount()
-	if internal < MinConnectionCount {
-		for _, seed := range config.Parameters.SeedList {
-			node.Connect(seed)
-		}
-	}
-
-	if total < MaxOutBoundCount {
-		for _, addr := range node.RandGetAddresses() {
-			node.Connect(addr.String())
-		}
-	}
-
-	if node.NeedMoreAddresses() {
-		for _, nbr := range node.GetNeighborNodes() {
-			nbr.RequireNeighbourList()
-		}
-	}
-
-	if total > DefaultMaxPeers {
-		node.Events().Notify(events.EventNodeDisconnect, node.GetANeighbourRandomly().ID())
 	}
 }
 
-func (node *node) NetAddress() p2p.NetAddress {
+func (node *node) ReqNeighborList() {
+	go node.Send(new(msg.GetAddr))
+}
+
+func (node *node) ConnectSeeds() {
+	if node.nbrNodes.GetConnectionCnt() < MinConnectionCount {
+		for _, nodeAddr := range config.Parameters.SeedList {
+			found := false
+			var n Noder
+			node.nbrNodes.Lock()
+			for _, tn := range node.nbrNodes.List {
+				addr := getNodeAddr(tn)
+				if nodeAddr == addr.String() {
+					n = tn
+					found = true
+					break
+				}
+			}
+			node.nbrNodes.Unlock()
+			if found {
+				if n.State() == p2p.ESTABLISH {
+					if LocalNode.NeedMoreAddresses() {
+						n.ReqNeighborList()
+					}
+				}
+			} else { //not found
+				go node.Connect(nodeAddr)
+			}
+		}
+	}
+}
+
+func (node *node) ConnectNode() {
+	cntcount := node.nbrNodes.GetConnectionCnt()
+	if cntcount < MaxOutBoundCount {
+		nbrAddr, _ := node.GetNeighborAddrs()
+		addrs := node.RandGetAddresses(nbrAddr)
+		for _, addr := range addrs {
+			go node.Connect(addr.String())
+		}
+	}
+}
+
+func getNodeAddr(n *node) p2p.NetAddress {
 	var addr p2p.NetAddress
-	addr.IP, _ = node.Addr16()
-	addr.Time = node.GetTime()
-	addr.Services = node.Services()
-	addr.Port = node.Port()
-	addr.ID = node.ID()
+	addr.IP, _ = n.Addr16()
+	addr.Time = n.GetTime()
+	addr.Services = n.Services()
+	addr.Port = n.Port()
+	addr.ID = n.ID()
 	return addr
+}
+
+// FIXME part of node info update function could be a node method itself intead of
+// a node map method
+// Fixme the Nodes should be a parameter
+func (node *node) updateNodeInfo() {
+	periodUpdateTime := config.DefaultGenBlockTime / TimesOfUpdateTime
+	ticker := time.NewTicker(time.Second * (time.Duration(periodUpdateTime)) * 2)
+	for {
+		select {
+		case <-ticker.C:
+			node.SendPingToNbr()
+			node.SyncBlocks()
+			node.HeartBeatMonitor()
+		}
+	}
+	// TODO when to close the timer
+	//close(quit)
+}
+
+func (node *node) CheckConnCnt() {
+	//compare if connect count is larger than DefaultMaxPeers, disconnect one of the connection
+	if node.nbrNodes.GetConnectionCnt() > DefaultMaxPeers {
+		node.GetEvent("disconnect").Notify(events.EventNodeDisconnect, node.RandGetANbr())
+	}
+}
+
+func (node *node) updateConnection() {
+	t := time.NewTicker(time.Second * ConnMonitor)
+	for {
+		select {
+		case <-t.C:
+			node.ConnectSeeds()
+			node.ConnectNode()
+			node.CheckConnCnt()
+		}
+	}
 }

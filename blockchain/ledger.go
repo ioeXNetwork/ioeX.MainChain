@@ -8,7 +8,7 @@ import (
 	. "github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
-var FoundationAddress Uint168
+var FoundationAddress string
 
 var DefaultLedger *Ledger
 

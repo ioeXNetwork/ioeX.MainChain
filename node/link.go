@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net"
 	"strings"
-	"sync"
 	"time"
 
 	. "github.com/ioeXNetwork/ioeX.MainChain/config"
@@ -19,13 +18,12 @@ import (
 )
 
 type link struct {
-	addr         string       // The address of the node
-	conn         net.Conn     // Connect socket with the peer node
-	port         uint16       // The server port of the node
-	httpInfoPort uint16       // The node information server port of the node
-	activeLock   sync.RWMutex // The read and write lock for active time
-	lastActive   time.Time    // The latest time the node activity
-	handshakeQueue
+	addr         string    // The address of the node
+	conn         net.Conn  // Connect socket with the peer node
+	port         uint16    // The server port of the node
+	httpInfoPort uint16    // The node information server port of the node
+	lastActive   time.Time // The latest time the node activity
+	connCnt      uint64    // The connection count
 	*p2p.MsgHelper
 }
 
@@ -34,26 +32,22 @@ func (link *link) CloseConn() {
 }
 
 func (node *node) UpdateLastActive() {
-	node.activeLock.Lock()
-	defer node.activeLock.Unlock()
 	node.lastActive = time.Now()
 }
 
 func (node *node) GetLastActiveTime() time.Time {
-	node.activeLock.RLock()
-	defer node.activeLock.RUnlock()
 	return node.lastActive
 }
 
 func (node *node) initConnection() {
-	go listenNodePort()
+	go node.listenNodePort()
 	// Listen open port if OpenService enabled
 	if Parameters.OpenService {
-		go listenNodeOpenPort()
+		go node.listenNodeOpenPort()
 	}
 }
 
-func listenNodePort() {
+func (node *node) listenNodePort() {
 	var err error
 	var listener net.Listener
 
@@ -75,22 +69,23 @@ func listenNodePort() {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Error("Error accepting", err)
+			log.Error("Error accepting ", err.Error())
 			return
 		}
-		log.Infof("Remote node %v connect with %v", conn.RemoteAddr(), conn.LocalAddr())
+		log.Info("Remote node connect with ", conn.RemoteAddr(), conn.LocalAddr())
+
+		node.link.connCnt++
 
 		node := NewNode(Parameters.Magic, conn)
 		node.addr, err = parseIPaddr(conn.RemoteAddr().String())
 		node.Read()
-		LocalNode.AddToHandshakeQueue(conn.RemoteAddr().String(), node)
 	}
 }
 
 func initNonTlsListen() (net.Listener, error) {
 	listener, err := net.Listen("tcp", fmt.Sprint(":", Parameters.NodePort))
 	if err != nil {
-		log.Error("Error listening", err)
+		log.Error("Error listening\n", err.Error())
 		return nil, err
 	}
 	return listener, nil
@@ -126,7 +121,7 @@ func initTlsListen() (net.Listener, error) {
 		ClientCAs:    pool,
 	}
 
-	log.Info("TLS listen port is", Parameters.NodePort)
+	log.Info("TLS listen port is ", Parameters.NodePort)
 	listener, err := tls.Listen("tcp", fmt.Sprint(":", Parameters.NodePort), tlsConfig)
 	if err != nil {
 		log.Error(err)
@@ -144,62 +139,47 @@ func parseIPaddr(s string) (string, error) {
 	return s[:i], nil
 }
 
-func resolveTCPAddr(addr string) (string, error) {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
-	if err != nil {
-		log.Debugf("Can not resolve address %s", addr)
-		return addr, err
-	}
+func (node *node) Connect(nodeAddr string) error {
+	log.Debug()
 
-	return tcpAddr.String(), nil
-}
-
-func (node *node) Connect(addr string) error {
-	// Resolve tcpAddr address first
-	tcpAddr, err := resolveTCPAddr(addr)
-	if err != nil {
-		return err
-	}
-	log.Debugf("Addr %s, resolved tcpAddr %s", addr, tcpAddr)
-
-	if node.IsNeighborAddr(tcpAddr) {
-		log.Debugf("addr %s in neighbor list, cancel", addr)
+	if node.IsAddrInNbrList(nodeAddr) {
 		return nil
 	}
-	if !node.AddToConnectingList(tcpAddr) {
-		log.Debugf("addr %s in connecting list, cancel", addr)
-		return nil
+	if !node.SetAddrInConnectingList(nodeAddr) {
+		return errors.New("node exist in connecting list, cancel")
 	}
 
+	isTls := Parameters.IsTLS
 	var conn net.Conn
+	var err error
 
-	if Parameters.IsTLS {
-		conn, err = TLSDial(addr)
+	if isTls {
+		conn, err = TLSDial(nodeAddr)
 		if err != nil {
-			node.RemoveFromConnectingList(tcpAddr)
-			log.Error("TLS connect failed:", err)
+			node.RemoveAddrInConnectingList(nodeAddr)
+			log.Error("TLS connect failed: ", err)
 			return err
 		}
 	} else {
-		conn, err = NonTLSDial(tcpAddr)
+		conn, err = NonTLSDial(nodeAddr)
 		if err != nil {
-			node.RemoveFromConnectingList(tcpAddr)
-			log.Error("non TLS connect failed:", err)
+			node.RemoveAddrInConnectingList(nodeAddr)
+			log.Error("non TLS connect failed: ", err)
 			return err
 		}
 	}
+	node.link.connCnt++
 	n := NewNode(Parameters.Magic, conn)
 	n.addr, err = parseIPaddr(conn.RemoteAddr().String())
 
-	log.Infof("Local node %s connect with %s with %s",
+	log.Info(fmt.Sprintf("Connect node %s connect with %s with %s",
 		conn.LocalAddr().String(), conn.RemoteAddr().String(),
-		conn.RemoteAddr().Network())
+		conn.RemoteAddr().Network()))
 	n.Read()
 
 	n.SetState(p2p.HAND)
 	n.Send(NewVersion(node))
 
-	node.AddToHandshakeQueue(tcpAddr, n)
 	return nil
 }
 
@@ -246,10 +226,8 @@ func TLSDial(nodeAddr string) (net.Conn, error) {
 
 func (node *node) Send(msg p2p.Message) {
 	if node.State() == p2p.INACTIVITY {
-		log.Errorf("-----> Push [%s] to INACTIVE peer [0x%x]", msg.CMD(), node.ID())
 		return
 	}
-	log.Debugf("-----> Push [%s] to peer [0x%x] STARTED", msg.CMD(), node.ID())
+
 	node.MsgHelper.Write(msg)
-	log.Debugf("-----> Push [%s] to peer [0x%x] FINISHED", msg.CMD(), node.ID())
 }

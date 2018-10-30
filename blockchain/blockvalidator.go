@@ -23,10 +23,10 @@ func PowCheckBlockSanity(block *Block, powLimit *big.Int, timeSource MedianTimeS
 	header := block.Header
 	hash := header.Hash()
 	if !header.AuxPow.Check(&hash, AuxPowChainID) {
-		return errors.New("[PowCheckBlockSanity] block check aux pow failed")
+		return errors.New("[PowCheckBlockSanity] block check proof is failed")
 	}
 	if CheckProofOfWork(&header, powLimit) != nil {
-		return errors.New("[PowCheckBlockSanity] block check proof of work failed")
+		return errors.New("[PowCheckBlockSanity] block check proof is failed.")
 	}
 
 	// A block timestamp must not have a greater precision than one second.
@@ -48,7 +48,7 @@ func PowCheckBlockSanity(block *Block, powLimit *big.Int, timeSource MedianTimeS
 	}
 
 	// A block must not have more transactions than the max block payload.
-	if numTx > config.Parameters.MaxTxsInBlock {
+	if numTx > config.Parameters.MaxTxInBlock {
 		return errors.New("[PowCheckBlockSanity]  block contains too many transactions")
 	}
 
@@ -58,20 +58,42 @@ func PowCheckBlockSanity(block *Block, powLimit *big.Int, timeSource MedianTimeS
 		return errors.New("[PowCheckBlockSanity] serialized block is too big")
 	}
 
+	// The first transaction in a block must be a coinbase.
 	transactions := block.Transactions
-	for index, tx := range transactions {
-		// The first transaction in a block must be a coinbase.
-		if index == 0 {
-			if !tx.IsCoinBaseTx() {
-				return errors.New("[PowCheckBlockSanity] first transaction in block is not a coinbase")
-			}
-			continue
-		}
+	if !transactions[0].IsCoinBaseTx() {
+		return errors.New("[PowCheckBlockSanity] first transaction in block is not a coinbase")
+	}
 
-		// A block must not have more than one coinbase.
+	// A block must not have more than one coinbase.
+	for _, tx := range transactions[1:] {
 		if tx.IsCoinBaseTx() {
 			return errors.New("[PowCheckBlockSanity] block contains second coinbase")
 		}
+	}
+
+	var tharray []Uint256
+	for _, txn := range transactions {
+		txhash := txn.Hash()
+		tharray = append(tharray, txhash)
+	}
+	calcTransactionsRoot, err := crypto.ComputeRoot(tharray)
+	if err != nil {
+		return errors.New("[PowCheckBlockSanity] merkleTree compute failed")
+	}
+	if !header.MerkleRoot.IsEqual(calcTransactionsRoot) {
+		return errors.New("[PowCheckBlockSanity] block merkle root is invalid")
+	}
+
+	// Check for duplicate transactions.  This check will be fairly quick
+	// since the transaction hashes are already cached due to building the
+	// merkle tree above.
+	existingTxHashes := make(map[Uint256]struct{})
+	for _, txn := range transactions {
+		txHash := txn.Hash()
+		if _, exists := existingTxHashes[txHash]; exists {
+			return errors.New("[PowCheckBlockSanity] block contains duplicate transaction")
+		}
+		existingTxHashes[txHash] = struct{}{}
 	}
 
 	// Check transaction outputs after a update checkpoint.
@@ -80,81 +102,10 @@ func PowCheckBlockSanity(block *Block, powLimit *big.Int, timeSource MedianTimeS
 		version += CheckTxOut
 	}
 
-	txIds := make([]Uint256, 0, len(transactions))
-	existingTxIds := make(map[Uint256]struct{})
-	existingTxInputs := make(map[string]struct{})
-	existingSideTxs := make(map[Uint256]struct{})
-	for _, txn := range transactions {
-		txId := txn.Hash()
-		// Check for duplicate transactions.
-		if _, exists := existingTxIds[txId]; exists {
-			return errors.New("[PowCheckBlockSanity] block contains duplicate transaction")
+	for _, txVerify := range transactions {
+		if errCode := CheckTransactionSanity(version, txVerify); errCode != Success {
+			return errors.New("CheckTransactionSanity failed when verify block")
 		}
-		existingTxIds[txId] = struct{}{}
-
-		// Check for transaction sanity
-		if errCode := CheckTransactionSanity(version, txn); errCode != Success {
-			return errors.New("CheckTransactionSanity failed when verifiy block")
-		}
-
-		// Check for duplicate UTXO inputs in a block
-		for _, input := range txn.Inputs {
-			referKey := input.ReferKey()
-			if _, exists := existingTxInputs[referKey]; exists {
-				return errors.New("[PowCheckBlockSanity] block contains duplicate UTXO")
-			}
-			existingTxInputs[referKey] = struct{}{}
-		}
-
-		if txn.IsWithdrawFromSideChainTx() {
-			witPayload := txn.Payload.(*PayloadWithdrawFromSideChain)
-
-			// Check for duplicate sidechain tx in a block
-			for _, hash := range witPayload.SideChainTransactionHashes {
-				if _, exists := existingSideTxs[hash]; exists {
-					return errors.New("[PowCheckBlockSanity] block contains duplicate sidechain Tx")
-				}
-				existingSideTxs[hash] = struct{}{}
-			}
-		}
-
-		// Append transaction to list
-		txIds = append(txIds, txId)
-	}
-	calcTransactionsRoot, err := crypto.ComputeRoot(txIds)
-	if err != nil {
-		return errors.New("[PowCheckBlockSanity] merkleTree compute failed")
-	}
-	if !header.MerkleRoot.IsEqual(calcTransactionsRoot) {
-		return errors.New("[PowCheckBlockSanity] block merkle root is invalid")
-	}
-
-	return nil
-}
-
-func CheckBlockContext(block *Block) error {
-	var rewardInCoinbase = Fixed64(0)
-	var totalTxFee = Fixed64(0)
-
-	for index, tx := range block.Transactions {
-		if errCode := CheckTransactionContext(tx); errCode != Success {
-			return errors.New("CheckTransactionContext failed when verify block")
-		}
-
-		if index == 0 {
-			// Calculate reward in coinbase
-			for _, output := range tx.Outputs {
-				rewardInCoinbase += output.Value
-			}
-			continue
-		}
-		// Calculate transaction fee
-		totalTxFee += GetTxFee(tx, DefaultLedger.Blockchain.AssetID)
-	}
-
-	// Reward in coinbase must match 23 IOEX
-	if rewardInCoinbase-totalTxFee != RewardAmountPerBlock {
-		return errors.New("reward amount in coinbase not correct")
 	}
 
 	return nil
@@ -186,11 +137,23 @@ func PowCheckBlockContext(block *Block, prevNode *BlockNode, ledger *Ledger) err
 		return errors.New("block timestamp is not after expected")
 	}
 
-	for _, tx := range block.Transactions[1:] {
-		if !IsFinalizedTransaction(tx, block.Height) {
+	// The height of this block is one more than the referenced
+	// previous block.
+	blockHeight := prevNode.Height + 1
+
+	// Ensure all transactions in the block are finalized.
+	for _, txn := range block.Transactions[1:] {
+		if !IsFinalizedTransaction(txn, blockHeight) {
 			return errors.New("block contains unfinalized transaction")
 		}
 	}
+
+	// for _, txVerify := range block.Transactions {
+	// 	if errCode := CheckTransactionContext(txVerify, ledger); errCode != ErrNoError {
+	// 		fmt.Println("CheckTransactionContext failed when verify block", errCode)
+	// 		return errors.New(fmt.Sprintf("CheckTransactionContext failed when verify block"))
+	// 	}
+	// }
 
 	return nil
 }

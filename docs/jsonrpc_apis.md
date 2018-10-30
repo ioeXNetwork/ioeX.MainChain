@@ -1,7 +1,7 @@
 Instructions
 ===============
 
-this is the document of ioex json rpc interfaces.
+this is the document of ela json rpc interfaces.
 it follows json-rpc 2.0 protocol but also keeps compatible with 1.0 version. 
 That means both named params and positional params are acceptable.
 
@@ -217,7 +217,7 @@ result format in 'tx' please see interface 'getrawtransaction'
                 "type": 0,
                 "payloadversion": 4,
                 "payload": {
-                    "CoinbaseData": "IOEX"
+                    "CoinbaseData": "ELA"
                 },
                 "attributes": [
                     {
@@ -340,7 +340,7 @@ result sample:(verbose=true)
         "type": 0,
         "payloadversion": 4,
         "payload": {
-            "CoinbaseData": "IOEX"
+            "CoinbaseData": "ELA"
         },
         "attributes": [
             {
@@ -386,81 +386,6 @@ result sample:
   "id": null,
   "jsonrpc": "2.0",
 }
-```
-
-#### getreceivedbyaddress
-description: get the balance of an address
-
-parameters:
-
-| name | type | description |
-| ---- | ---- | ----------- |
-| address | string | address |
-
-result: the balance of the address
-
-argument sample:
-```json
-{
-	"method":"getreceivedbyaddress",
-	"params":{"address":"8VYXVxKKSAxkmRrfmGpQR2Kc66XhG6m3ta"}
-}
-```
-result sample:
-```json
-{
-    "error": null,
-    "id": null,
-    "jsonrpc": "2.0",
-    "result": "33000000"
-}
-```
-#### listunspent
-
-description: list all utxo of given addresses 
-
-parameters:
-
-| name | type | description |
-| ---- | ---- | ----------- |
-| addresses | array[string] | addresses |
-
-result:
-please see below
-
-argument sample:
-```json
-{
-    "method":"listunspent",
-    "params":{"addresses": ["8ZNizBf4KhhPjeJRGpox6rPcHE5Np6tFx3", "EeEkSiRMZqg5rd9a2yPaWnvdPcikFtsrjE"]}
-}
-```
-result sample:
-```json
-{
-    "error": null,
-    "id": null,
-    "jsonrpc": "2.0",
-    "result": [
-        {
-            "assetid": "a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0",
-            "txid": "9132cf82a18d859d200c952aec548d7895e7b654fd1761d5d059b91edbad1768",
-            "vout": 0,
-            "address": "8ZNizBf4KhhPjeJRGpox6rPcHE5Np6tFx3",
-            "amount": "33000000",
-            "confirmations": 1102,
-            "outputlock": 0
-        },
-        {
-            "assetid": "a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0",
-            "txid": "3edbcc839fd4f16c0b70869f2d477b56a006d31dc7a10d8cb49bd12628d6352e",
-            "vout": 0,
-            "address": "8ZNizBf4KhhPjeJRGpox6rPcHE5Np6tFx3",
-            "amount": "0.01255707",
-            "confirmations": 846,
-            "outputlock": 0
-        }
-    ]
 ```
 #### setloglevel
 
@@ -526,7 +451,7 @@ results:
 | ---- | ---- | ----------- |
 | Time | integer | current time in unix nano format |
 | Services | integer | node service type. 4 is spv service and 0 is no spv service |
-| IP | array[integer] | ip in 16-byte representation |
+| IP | arrry[integer] | ip in 16-byte representation |
 | Port | integer | p2p network port |
 | ID | integer | node's id | 
 
@@ -564,35 +489,17 @@ results:
 
 | name | type | description |
 | ---- | ---- | ----------- |
-| Compile | string | node's compile version |
-| ID | integer | node's id |
-| HexID | string | node's id in hex format |
-| Height | integer | current height |
+| Time | integer | current time in unix nano format |
+| State | integer | node's state | 
 | Version | integer | node's version in config.json |
 | Services | integer | node service type. 4 is spv service and 0 is no spv service |
+| IP | arrry[integer] | ip in 16-byte representation |
 | Relay | bool | whether node will relay transaction or not |
 | TxnCnt | integer | transactions transmitted by this node |
 | RxTxnCnt | integer | The transaction received by this node |
+| Height | integer | current height |
 | Port | integer | p2p network port |
-| RPCPort | integer | json-RPC service port |
-| RestPort | integer | RESTful service port |
-| WSPort | integer | webservice port |
-| OpenPort | integer | open service port |
-| OpenService | bool | if opens service enabled |
-| Neighbors | array[neighbor] | neighbor nodes information |
-
-neighbor:
-
-| name | type | description |
-| ---- | ---- | ----------- |
-| ID | integer | neighbor's id |
-| HexID | string | neighbor's id in hex format |
-| Height | integer | neighbor current height |
-| Services | integer | neighbor service type. 4 is spv service and 0 is no spv service |
-| Relay | bool | whether neighbor will relay transaction or not |
-| External | bool | whether neighbor is from external network |
-| State | string | neighbor state in string format |
-| NetAddress | string | neighbor tcp address |
+| ID | integer | node's id | 
 
 argument sample:
 ```json
@@ -607,33 +514,16 @@ argument sample:
     "error": null,
     "jsonrpc": "2.0",
     "result": {
-        "Compile": "v0.1.1-50-gcd97",
-        "ID": 10544939963783245780,
-        "HexID": "0x925727070f1eefd4",
-        "Height": 168748,
-        "Version": 0,
+        "State": 0,
+        "Port": 20338,
+        "ID": 16645880157291893421,
+        "Time": 1524198859097844000,
+        "Version": 1,
         "Services": 4,
         "Relay": true,
+        "Height": 0,
         "TxnCnt": 0,
-        "RxTxnCnt": 0,
-        "Port": 20338,
-        "PRCPort": 20336,
-        "RestPort": 20334,
-        "WSPort": 20335,
-        "OpenPort": 20866,
-        "OpenService": true,
-        "Neighbors": [
-            {
-                "ID": 8978226977158442839,
-                "HexID": "0x7c9911ddf65baf57",
-                "Height": 168748,
-                "Services": 4,
-                "Relay": true,
-                "External": false,
-                "State": "ESTABLISH",
-                "NetAddress": "13.229.160.170:20866"
-            }
-        ]
+        "RxTxnCnt": 0
     }
 }
 ```
@@ -729,89 +619,6 @@ result sample:
     "error": null
 }
 ```
-
-#### createauxblock
-
-description: generate an auxiliary block  
-parameters:
-
-| name | type | description |
-| ---- | ---- | ----------- |
-| paytoaddress | string | miner's address | 
-
-named arguments sample:
-```json
-{
-	"method":"createauxblock",
-	"params":{"paytoaddress":"Ef4UcaHwvFrFzzsyVf5YH4JBWgYgUqfTAB"}
-}
-```
-positional arguments sample:
-```json
-{
-	"method": "createauxblock",
-	"params": ["Ef4UcaHwvFrFzzsyVf5YH4JBWgYgUqfTAB"]
-}
-```
-
-result sample:
-```json
-{
-    "error": null,
-    "id": null,
-    "jsonrpc": "2.0",
-    "result": {
-        "chainid": 1224,
-        "height": 152789,
-        "coinbasevalue": 175799086,
-        "bits": "1d36c855",
-        "hash": "e28a262b38316fddefb0b5c753f7cc0022afe94e95f881576ad6b8f33f4e49fe",
-        "previousblockhash": "f297d03791f4cf2c6ef093b02a77465ea876b040b7772e56b8e140f3bff73871"
-    }
-}
-```
-
-#### submitauxblock
-
-description: submit the solved auxpow of an auxiliary block   
-parameters:
-
-| name | type | description |
-| ---- | ---- | ----------- |
-| blockhash | string | the auxiliary block hash |
-| auxpow | string | the solved auxpow of this auxiliary block |  
-
-named arguments sample:
-```json
-{
-	"method":"submitauxblock",
-	"params":{
-	  "blockhash": "7926398947f332fe534b15c628ff0cd9dc6f7d3ea59c74801dc758ac65428e64",
-	  "auxpow": "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4b0313ee0904a880495b742f4254432e434f4d2ffabe6d6d9581ba0156314f1e92fd03430c6e4428a32bb3f1b9dc627102498e5cfbf26261020000004204cb9a010f32a00601000000000000ffffffff0200000000000000001976a914c0174e89bd93eacd1d5a1af4ba1802d412afc08688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90000000014acac4ee8fdd8ca7e0b587b35fce8c996c70aefdf24c333038bdba7af531266000000000001ccc205f0e1cb435f50cc2f63edd53186b414fcb22b719da8c59eab066cf30bdb0000000000000020d1061d1e456cae488c063838b64c4911ce256549afadfc6a4736643359141b01551e4d94f9e8b6b03eec92bb6de1e478a0e913e5f733f5884857a7c2b965f53ca880495bffff7f20a880495b"
-	}
-}
-```
-positional arguments sample:
-```json
-{
-	"method":"submitauxblock",
-	"params":[
-	  "7926398947f332fe534b15c628ff0cd9dc6f7d3ea59c74801dc758ac65428e64",
-	  "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4b0313ee0904a880495b742f4254432e434f4d2ffabe6d6d9581ba0156314f1e92fd03430c6e4428a32bb3f1b9dc627102498e5cfbf26261020000004204cb9a010f32a00601000000000000ffffffff0200000000000000001976a914c0174e89bd93eacd1d5a1af4ba1802d412afc08688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90000000014acac4ee8fdd8ca7e0b587b35fce8c996c70aefdf24c333038bdba7af531266000000000001ccc205f0e1cb435f50cc2f63edd53186b414fcb22b719da8c59eab066cf30bdb0000000000000020d1061d1e456cae488c063838b64c4911ce256549afadfc6a4736643359141b01551e4d94f9e8b6b03eec92bb6de1e478a0e913e5f733f5884857a7c2b965f53ca880495bffff7f20a880495b"
-	]
-}
-```
-
-result sample:
-```json
-{
-  "error": null,
-  "id": null,
-  "jsonrpc": "2.0",
-  "result": true
-}
-```
-
 #### getinfo
 
 description: return node information.  

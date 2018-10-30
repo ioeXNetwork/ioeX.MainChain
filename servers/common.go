@@ -2,7 +2,6 @@ package servers
 
 import (
 	. "github.com/ioeXNetwork/ioeX.MainChain/core"
-	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 const TlsPort = 443
@@ -73,34 +72,17 @@ type BlockInfo struct {
 	AuxPow            string        `json:"auxpow"`
 }
 
-type NodeState struct {
-	Compile     string // The compile version of this server node
-	ID          uint64 // The nodes's id
-	HexID       string // The nodes's id in hex format
-	Height      uint64 // The ServerNode latest block height
-	Version     uint32 // The network protocol the ServerNode used
-	Services    uint64 // The services the local node supplied
-	Relay       bool   // The relay capability of the ServerNode (merge into capbility flag)
-	TxnCnt      uint64 // The transactions be transmit by
-	RxTxnCnt    uint64 // The transaction received by this ServerNode
-	Port        uint16 // The nodes's port
-	PRCPort     uint16 // The RPC service prot
-	RestPort    uint16 // The RESTful service port
-	WSPort      uint16 // The webservcie port
-	OpenPort    uint16 // The open service port
-	OpenService bool   // If open service is enabled
-	Neighbors   []Neighbor
-}
-
-type Neighbor struct {
-	ID         uint64 // The neighbor ID
-	HexID      string // The neighbor ID in hex format
-	Height     uint64 // The neighbor height
-	Services   uint64 // The services the neighbor node supplied
-	Relay      bool   // If this neighbor relay block and transactions
-	External   bool   // If this neighbor is an external node
-	State      string // The state of this neighbor node
-	NetAddress string // The tcp address of this neighbor node
+type NodeInfo struct {
+	State    uint   // NodeForServers status
+	Port     uint16 // The nodes's port
+	ID       uint64 // The nodes's id
+	Time     int64
+	Version  uint32 // The network protocol the NodeForServers used
+	Services uint64 // The services the NodeForServers supplied
+	Relay    bool   // The relay capability of the NodeForServers (merge into capbility flag)
+	Height   uint64 // The NodeForServers latest block height
+	TxnCnt   uint64 // The transactions be transmit by this NodeForServers
+	RxTxnCnt uint64 // The transaction received by this NodeForServers
 }
 
 type ArbitratorGroupInfo struct {
@@ -120,31 +102,14 @@ type RegisterAssetInfo struct {
 	Controller string
 }
 
-type SideChainPowInfo struct {
-	BlockHeight     uint32
-	SideBlockHash   string
-	SideGenesisHash string
-	SignedData      string
+type SideMiningInfo struct {
+	SideBlockHash string
 }
 
 type TransferCrossChainAssetInfo struct {
-	CrossChainAddresses []string
-	OutputIndexes       []uint64
-	CrossChainAmounts   []common.Fixed64
+	AddressesMap map[string]uint64
 }
 
-type WithdrawFromSideChainInfo struct {
-	BlockHeight                uint32
-	GenesisBlockAddress        string
-	SideChainTransactionHashes []string
-}
-
-type UTXOInfo struct {
-	AssetId       string `json:"assetid"`
-	Txid          string `json:"txid"`
-	VOut          uint32 `json:"vout"`
-	Address       string `json:"address"`
-	Amount        string `json:"amount"`
-	Confirmations uint32 `json:"confirmations"`
-	OutputLock    uint32 `json:"outputlock"`
+type WithdrawAssetInfo struct {
+	BlockHeight uint32
 }

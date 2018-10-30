@@ -28,12 +28,9 @@ func NewHandlerV0(node protocol.Noder) *HandlerV0 {
 // called to create the message instance with the CMD
 // which is the message type of the received message
 func (h *HandlerV0) OnMakeMessage(cmd string) (message p2p.Message, err error) {
-	// Nothing to do if node already disconnected
-	if h.node.State() == p2p.INACTIVITY {
-		return message, fmt.Errorf("revice message from INACTIVE node [0x%x]", h.node.ID())
-	}
-	// Filter messages through open port message filter
-	if err = h.FilterMessage(cmd); err != nil {
+	// Filter messages through SPV protocol
+	err = FilterMessage(h.node, cmd)
+	if err != nil {
 		return message, err
 	}
 	// Update node last active time
@@ -63,17 +60,9 @@ func (h *HandlerV0) OnMakeMessage(cmd string) (message p2p.Message, err error) {
 	return message, err
 }
 
-func (h *HandlerV0) OnMessageDecoded(message p2p.Message) {
-	log.Debugf("-----> [%s] from peer [0x%x] STARTED", message.CMD(), h.node.ID())
-	if err := h.HandleMessage(message); err != nil {
-		log.Error("Handle message error: " + err.Error())
-	}
-	log.Debugf("-----> [%s] from peer [0x%x] FINISHED", message.CMD(), h.node.ID())
-}
-
 // After message has been successful decoded, this method
 // will be called to pass the decoded message instance
-func (h *HandlerV0) HandleMessage(message p2p.Message) error {
+func (h *HandlerV0) OnMessageDecoded(message p2p.Message) {
 	var err error
 	switch message := message.(type) {
 	case *msg.Ping:
@@ -95,44 +84,43 @@ func (h *HandlerV0) HandleMessage(message p2p.Message) error {
 	default:
 		h.HandlerBase.OnMessageDecoded(message)
 	}
-	return err
+	if err != nil {
+		log.Error("Handler message error: " + err.Error())
+	}
 }
 
 func (h *HandlerV0) onPing(ping *msg.Ping) error {
+	log.Debug()
 	h.node.SetHeight(ping.Nonce)
 	h.node.Send(msg.NewPong(chain.DefaultLedger.Store.GetHeight()))
 	return nil
 }
 
 func (h *HandlerV0) onPong(pong *msg.Pong) error {
+	log.Debug()
 	h.node.SetHeight(pong.Nonce)
 	return nil
 }
 
 func (h *HandlerV0) onGetBlocks(req *msg.GetBlocks) error {
+	log.Debug()
 	node := h.node
-	LocalNode.AcqSyncBlkReqSem()
-	defer LocalNode.RelSyncBlkReqSem()
+	LocalNode.AcqSyncHdrReqSem()
+	defer LocalNode.RelSyncHdrReqSem()
 
 	start := chain.DefaultLedger.Blockchain.LatestLocatorHash(req.Locator)
 	hashes, err := GetBlockHashes(*start, req.HashStop, p2p.MaxHeaderHashes)
 	if err != nil {
 		return err
 	}
-
-	if len(hashes) > 0 {
-		node.Send(v0.NewInv(hashes))
-	}
+	go node.Send(v0.NewInv(hashes))
 	return nil
 }
 
 func (h *HandlerV0) onInv(inv *v0.Inv) error {
+	log.Debug()
 	node := h.node
-	log.Debugf("[OnInv] count %d hashes: %v", len(inv.Hashes), inv.Hashes)
-
-	if node.IsExternal() {
-		return fmt.Errorf("receive inv message from external node")
-	}
+	log.Debugf("[OnInv] count %d hashes: %v\n", len(inv.Hashes), inv.Hashes)
 
 	if LocalNode.IsSyncHeaders() && !node.IsSyncHeaders() {
 		return nil
@@ -174,7 +162,7 @@ func (h *HandlerV0) onGetData(req *v0.GetData) error {
 
 	block, err := chain.DefaultLedger.Store.GetBlock(hash)
 	if err != nil {
-		log.Debugf("Can't get block from hash %s, send not found message", hash)
+		log.Debug("Can't get block from hash: ", hash, " ,send not found message")
 		node.Send(v0.NewNotFound(hash))
 		return err
 	}
@@ -185,27 +173,30 @@ func (h *HandlerV0) onGetData(req *v0.GetData) error {
 }
 
 func (h *HandlerV0) onBlock(msgBlock *msg.Block) error {
+	log.Debug()
 	node := h.node
 	block := msgBlock.Block.(*core.Block)
 
 	hash := block.Hash()
-	if !LocalNode.IsNeighborNode(node.ID()) {
-		log.Trace("received block message from unknown peer")
-		return fmt.Errorf("received block message from unknown peer")
+	if !LocalNode.IsNeighborNoder(node) {
+		log.Trace("received headers message from unknown peer")
+		return fmt.Errorf("received headers message from unknown peer")
 	}
 
 	if chain.DefaultLedger.BlockInLedger(hash) {
 		h.duplicateBlocks++
 		log.Trace("Receive ", h.duplicateBlocks, " duplicated block.")
-		return fmt.Errorf("received duplicated block")
+		return nil
 	}
 
-	// Update sync timer
-	LocalNode.syncTimer.update()
 	chain.DefaultLedger.Store.RemoveHeaderListElement(hash)
 	LocalNode.DeleteRequestedBlock(hash)
 	_, isOrphan, err := chain.DefaultLedger.Blockchain.AddBlock(block)
 	if err != nil {
+		reject := msg.NewReject(msgBlock.CMD(), msg.RejectInvalid, err.Error())
+		reject.Hash = block.Hash()
+
+		node.Send(reject)
 		return fmt.Errorf("Block add failed: %s ,block hash %s ", err.Error(), hash.String())
 	}
 
@@ -227,16 +218,23 @@ func (h *HandlerV0) onBlock(msgBlock *msg.Block) error {
 }
 
 func (h *HandlerV0) onTx(msgTx *msg.Tx) error {
+	log.Debug()
 	node := h.node
 	tx := msgTx.Transaction.(*core.Transaction)
 
 	if !LocalNode.ExistedID(tx.Hash()) && !LocalNode.IsSyncHeaders() {
 		if errCode := LocalNode.AppendToTxnPool(tx); errCode != errors.Success {
+			reject := msg.NewReject(msgTx.CMD(), msg.RejectInvalid, errCode.Message())
+			reject.Hash = tx.Hash()
+
+			node.Send(reject)
 			return fmt.Errorf("[HandlerBase] VerifyTransaction failed when AppendToTxnPool")
 		}
 		LocalNode.Relay(node, tx)
-		log.Debugf("Relay Transaction hash %s type %s", tx.Hash().String(), tx.TxType.Name())
+		log.Info("Relay Transaction")
 		LocalNode.IncRxTxnCnt()
+		log.Debug("RX Transaction message hash", tx.Hash().String())
+		log.Debug("RX Transaction message type", tx.TxType.Name())
 	}
 
 	return nil

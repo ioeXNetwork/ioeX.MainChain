@@ -3,7 +3,6 @@ package servers
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -17,19 +16,16 @@ import (
 	. "github.com/ioeXNetwork/ioeX.MainChain/protocol"
 
 	. "github.com/ioeXNetwork/ioeX.Utility/common"
-	"github.com/ioeXNetwork/ioeX.Utility/p2p"
 )
 
 const (
-	AUXBLOCK_GENERATED_INTERVAL_SECONDS = 5
+	AUXBLOCK_GENERATED_INTERVAL_SECONDS = 60
 )
 
-var ServerNode Noder
+var NodeForServers Noder
 var LocalPow *pow.PowService
-
-var preChainHeight uint64
-var preTime int64
-var currentAuxBlock *Block
+var PreChainHeight uint64
+var PreTime int64
 
 func ToReversedString(hash Uint256) string {
 	return BytesToHexString(BytesReverse(hash[:]))
@@ -121,79 +117,48 @@ func GetRawTransaction(param Params) map[string]interface{} {
 	if err != nil {
 		return ResponsePack(InvalidTransaction, "")
 	}
-
-	var header *Header
-	var targetTransaction *Transaction
 	tx, height, err := chain.DefaultLedger.Store.GetTransaction(hash)
 	if err != nil {
-		//try to find transaction in transaction pool.
-		targetTransaction, ok = ServerNode.GetTransactionPool(false)[hash]
-		if !ok {
-			return ResponsePack(UnknownTransaction,
-				"cannot find transaction in blockchain and transactionpool")
-		}
-	} else {
-		targetTransaction = tx
-		bHash, err := chain.DefaultLedger.Store.GetBlockHash(height)
-		if err != nil {
-			return ResponsePack(UnknownTransaction, "")
-		}
-		header, err = chain.DefaultLedger.Store.GetHeader(bHash)
-		if err != nil {
-			return ResponsePack(UnknownTransaction, "")
-		}
+		return ResponsePack(UnknownTransaction, "")
+	}
+	bHash, err := chain.DefaultLedger.Store.GetBlockHash(height)
+	if err != nil {
+		return ResponsePack(UnknownTransaction, "")
+	}
+	header, err := chain.DefaultLedger.Store.GetHeader(bHash)
+	if err != nil {
+		return ResponsePack(UnknownTransaction, "")
 	}
 
-	verbose, _ := param.Bool("verbose")
+	verbose, ok := param.Bool("verbose")
 	if verbose {
-		return ResponsePack(Success, GetTransactionInfo(header, targetTransaction))
+		return ResponsePack(Success, GetTransactionInfo(header, tx))
 	} else {
 		buf := new(bytes.Buffer)
-		targetTransaction.Serialize(buf)
+		tx.Serialize(buf)
 		return ResponsePack(Success, BytesToHexString(buf.Bytes()))
 	}
 }
 
 func GetNeighbors(param Params) map[string]interface{} {
-	return ResponsePack(Success, ServerNode.GetNeighbourAddresses())
+	addr, _ := NodeForServers.GetNeighborAddrs()
+	return ResponsePack(Success, addr)
 }
 
 func GetNodeState(param Params) map[string]interface{} {
-	nodes := ServerNode.GetNeighborNodes()
-	neighbors := make([]Neighbor, 0, len(nodes))
-	for _, node := range nodes {
-		var state p2p.PeerState
-		state.SetState(node.State())
-		neighbors = append(neighbors, Neighbor{
-			ID:         node.ID(),
-			HexID:      fmt.Sprintf("0x%x", node.ID()),
-			Height:     node.Height(),
-			Services:   node.Services(),
-			Relay:      node.IsRelay(),
-			External:   node.IsExternal(),
-			State:      state.String(),
-			NetAddress: node.NetAddress().String(),
-		})
+	n := NodeInfo{
+		State:    NodeForServers.State(),
+		Time:     NodeForServers.GetTime(),
+		Port:     NodeForServers.Port(),
+		ID:       NodeForServers.ID(),
+		Version:  NodeForServers.Version(),
+		Services: NodeForServers.Services(),
+		Relay:    NodeForServers.IsRelay(),
+		Height:   NodeForServers.Height(),
+		TxnCnt:   NodeForServers.GetTxnCnt(),
+		RxTxnCnt: NodeForServers.GetRxTxnCnt(),
 	}
-	nodeState := NodeState{
-		Compile:     config.Version,
-		ID:          ServerNode.ID(),
-		HexID:       fmt.Sprintf("0x%x", ServerNode.ID()),
-		Height:      uint64(chain.DefaultLedger.Blockchain.BlockHeight),
-		Version:     ServerNode.Version(),
-		Services:    ServerNode.Services(),
-		Relay:       ServerNode.IsRelay(),
-		TxnCnt:      ServerNode.GetTxnCnt(),
-		RxTxnCnt:    ServerNode.GetRxTxnCnt(),
-		Port:        config.Parameters.NodePort,
-		PRCPort:     uint16(config.Parameters.HttpJsonPort),
-		RestPort:    uint16(config.Parameters.HttpRestPort),
-		WSPort:      uint16(config.Parameters.HttpWsPort),
-		OpenPort:    config.Parameters.NodeOpenPort,
-		OpenService: config.Parameters.OpenService,
-		Neighbors:   neighbors,
-	}
-	return ResponsePack(Success, nodeState)
+	return ResponsePack(Success, n)
 }
 
 func SetLogLevel(param Params) map[string]interface{} {
@@ -209,107 +174,117 @@ func SetLogLevel(param Params) map[string]interface{} {
 }
 
 func SubmitAuxBlock(param Params) map[string]interface{} {
-	blockHashHex, ok := param.String("blockhash")
+	blockHash, ok := param.String("blockhash")
 	if !ok {
-		return ResponsePack(InvalidParams, "parameter blockhash not found")
+		return ResponsePack(InvalidParams, "")
 	}
-	auxPow, ok := param.String("auxpow")
-	if !ok {
-		return ResponsePack(InvalidParams, "parameter auxpow not found")
+	if _, ok := LocalPow.MsgBlock.BlockData[blockHash]; !ok {
+		log.Trace("[json-rpc:SubmitAuxBlock] receive invalid block hash value:", blockHash)
+		return ResponsePack(InvalidParams, "")
 	}
 
-	blockHash, err := Uint256FromHexString(blockHashHex)
-	if err != nil {
-		return ResponsePack(InvalidParams, "bad blockhash")
-	}
-	var msgAuxBlock *Block
-	if msgAuxBlock, ok = LocalPow.AuxBlockPool.GetBlock(*blockHash); !ok {
-		log.Trace("[json-rpc:SubmitAuxBlock] block hash unknown", blockHash)
-		return ResponsePack(InternalError, "block hash unknown")
+	auxPow, ok := param.String("auxpow")
+	if !ok {
+		return ResponsePack(InvalidParams, "")
 	}
 
 	var aux aux.AuxPow
 	buf, _ := HexStringToBytes(auxPow)
 	if err := aux.Deserialize(bytes.NewReader(buf)); err != nil {
-		log.Trace("[json-rpc:SubmitAuxBlock] auxpow deserialization failed", auxPow)
-		return ResponsePack(InternalError, "auxpow deserialization failed")
+		log.Trace("[json-rpc:SubmitAuxBlock] can not resolve auxpow parameter: ", auxPow)
+		return ResponsePack(InvalidParams, "can not resolve auxpow parameter")
 	}
 
-	msgAuxBlock.Header.AuxPow = aux
-	_, _, err = chain.DefaultLedger.Blockchain.AddBlock(msgAuxBlock)
+	LocalPow.MsgBlock.BlockData[blockHash].Header.AuxPow = aux
+	_, _, err := chain.DefaultLedger.Blockchain.AddBlock(LocalPow.MsgBlock.BlockData[blockHash])
 	if err != nil {
 		log.Trace(err)
-		return ResponsePack(InternalError, "adding block failed")
+		return ResponsePack(InternalError, "")
 	}
 
-	LocalPow.BroadcastBlock(msgAuxBlock)
+	LocalPow.MsgBlock.Mutex.Lock()
+	for key := range LocalPow.MsgBlock.BlockData {
+		delete(LocalPow.MsgBlock.BlockData, key)
+	}
+	LocalPow.MsgBlock.Mutex.Unlock()
+	log.Trace("AddBlock called finished and LocalPow.MsgBlock.BlockData has been deleted completely")
 
-	log.Trace("AddBlock called finished and LocalPow.MsgBlock.MapNewBlock has been deleted completely")
 	log.Info(auxPow, blockHash)
-	return ResponsePack(Success, true)
+	return ResponsePack(Success, "")
+}
+
+func GenerateAuxBlock(addr string) (*Block, string, bool) {
+	msgBlock := new(Block)
+	if NodeForServers.Height() == 0 || PreChainHeight != NodeForServers.Height() ||
+		time.Now().Unix()-PreTime > AUXBLOCK_GENERATED_INTERVAL_SECONDS {
+
+		if PreChainHeight != NodeForServers.Height() {
+			PreChainHeight = NodeForServers.Height()
+			PreTime = time.Now().Unix()
+		}
+
+		currentTxsCount := LocalPow.CollectTransactions(msgBlock)
+		if 0 == currentTxsCount {
+			// return nil, "currentTxs is nil", false
+		}
+
+		msgBlock, err := LocalPow.GenerateBlock(addr)
+		if nil != err {
+			return nil, "msgBlock generate err", false
+		}
+
+		// TODO is this hash needs to reverse ?
+		curHash := msgBlock.Hash()
+		curHashStr := BytesToHexString(curHash.Bytes())
+
+		LocalPow.MsgBlock.Mutex.Lock()
+		LocalPow.MsgBlock.BlockData[curHashStr] = msgBlock
+		LocalPow.MsgBlock.Mutex.Unlock()
+
+		PreChainHeight = NodeForServers.Height()
+		PreTime = time.Now().Unix()
+
+		return msgBlock, curHashStr, true
+	}
+	return nil, "", false
 }
 
 func CreateAuxBlock(param Params) map[string]interface{} {
+	msgBlock, curHashStr, _ := GenerateAuxBlock(config.Parameters.PowConfiguration.PayToAddr)
+	if nil == msgBlock {
+		return ResponsePack(UnknownBlock, "")
+	}
+
 	var ok bool
 	LocalPow.PayToAddr, ok = param.String("paytoaddress")
 	if !ok {
-		return ResponsePack(InvalidParams, "parameter paytoaddress not found")
-	}
-
-	if ServerNode.Height() == 0 || preChainHeight != ServerNode.Height() ||
-		time.Now().Unix()-preTime > AUXBLOCK_GENERATED_INTERVAL_SECONDS {
-
-		if preChainHeight != ServerNode.Height() {
-			// Clear old blocks since they're obsolete now.
-			currentAuxBlock = nil
-			LocalPow.AuxBlockPool.ClearBlock()
-		}
-
-		// Create new block with nonce = 0
-		auxBlock, err := LocalPow.GenerateBlock(config.Parameters.PowConfiguration.PayToAddr)
-		if nil != err {
-			return ResponsePack(InternalError, "generate block failed")
-		}
-
-		// Update state only when CreateNewBlock succeeded
-		preChainHeight = ServerNode.Height()
-		preTime = time.Now().Unix()
-
-		// Save
-		currentAuxBlock = auxBlock
-		LocalPow.AuxBlockPool.AppendBlock(auxBlock)
-	}
-
-	// At this point, currentAuxBlock is always initialised: If we make it here without creating
-	// a new block above, it means that, in particular, preChainHeight == ServerNode.Height().
-	// But for that to happen, we must already have created a currentAuxBlock in a previous call,
-	// as preChainHeight is initialised only when currentAuxBlock is.
-	if currentAuxBlock == nil {
-		return ResponsePack(InternalError, "no block cached")
+		return ResponsePack(InvalidParams, "")
 	}
 
 	type AuxBlock struct {
-		ChainId           int     `json:"chainid"`
-		Height            uint64  `json:"height"`
-		CoinBaseValue     Fixed64 `json:"coinbasevalue"`
-		Bits              string  `json:"bits"`
-		Hash              string  `json:"hash"`
-		PreviousBlockHash string  `json:"previousblockhash"`
+		ChainId           int    `json:"chainid"`
+		Height            uint64 `json:"height"`
+		CoinBaseValue     int    `json:"coinbasevalue"`
+		Bits              string `json:"bits"`
+		Hash              string `json:"hash"`
+		PreviousBlockHash string `json:"previousblockhash"`
 	}
+
+	preHash := chain.DefaultLedger.Blockchain.CurrentBlockHash()
+	preHashStr := BytesToHexString(preHash.Bytes())
 
 	SendToAux := AuxBlock{
 		ChainId:           aux.AuxPowChainID,
-		Height:            ServerNode.Height(),
-		CoinBaseValue:     currentAuxBlock.Transactions[0].Outputs[1].Value,
-		Bits:              fmt.Sprintf("%x", currentAuxBlock.Header.Bits),
-		Hash:              currentAuxBlock.Hash().String(),
-		PreviousBlockHash: chain.DefaultLedger.Blockchain.CurrentBlockHash().String(),
+		Height:            NodeForServers.Height(),
+		CoinBaseValue:     1,                                       //transaction content
+		Bits:              fmt.Sprintf("%x", msgBlock.Header.Bits), //difficulty
+		Hash:              curHashStr,
+		PreviousBlockHash: preHashStr,
 	}
 	return ResponsePack(Success, &SendToAux)
 }
 
 func GetInfo(param Params) map[string]interface{} {
-	_, count := ServerNode.GetConnectionCount()
 	RetVal := struct {
 		Version        int    `json:"version"`
 		Balance        int    `json:"balance"`
@@ -326,9 +301,9 @@ func GetInfo(param Params) map[string]interface{} {
 	}{
 		Version:        config.Parameters.Version,
 		Balance:        0,
-		Blocks:         ServerNode.Height(),
+		Blocks:         NodeForServers.Height(),
 		Timeoffset:     0,
-		Connections:    count,
+		Connections:    NodeForServers.GetConnectionCnt(),
 		Keypoololdest:  0,
 		Keypoolsize:    0,
 		Unlocked_until: 0,
@@ -363,38 +338,32 @@ func ToggleMining(param Params) map[string]interface{} {
 }
 
 func DiscreteMining(param Params) map[string]interface{} {
-
-	if LocalPow == nil {
-		return ResponsePack(PowServiceNotStarted, "")
-	}
 	count, ok := param.Uint("count")
 	if !ok {
 		return ResponsePack(InvalidParams, "")
 	}
 
-	ret := make([]string, 0)
+	ret := make([]string, count)
 
 	blockHashes, err := LocalPow.DiscreteMining(uint32(count))
 	if err != nil {
 		return ResponsePack(Error, err)
 	}
 
-	for _, hash := range blockHashes {
-		retStr := ToReversedString(*hash)
-		ret = append(ret, retStr)
+	for i, hash := range blockHashes {
+		ret[i] = ToReversedString(*hash)
 	}
 
 	return ResponsePack(Success, ret)
 }
 
 func GetConnectionCount(param Params) map[string]interface{} {
-	_, count := ServerNode.GetConnectionCount()
-	return ResponsePack(Success, count)
+	return ResponsePack(Success, NodeForServers.GetConnectionCnt())
 }
 
 func GetTransactionPool(param Params) map[string]interface{} {
 	txs := make([]*TransactionInfo, 0)
-	for _, t := range ServerNode.GetTransactionPool(false) {
+	for _, t := range NodeForServers.GetTxnPool(false) {
 		txs = append(txs, GetTransactionInfo(nil, t))
 	}
 	return ResponsePack(Success, txs)
@@ -439,7 +408,7 @@ func GetBlockInfo(block *Block, verbose bool) BlockInfo {
 		Bits:              block.Header.Bits,
 		Difficulty:        chain.CalcCurrentDifficulty(block.Header.Bits),
 		ChainWork:         BytesToHexString(chainWork[:]),
-		PreviousBlockHash: ToReversedString(block.Header.Previous),
+		PreviousBlockHash: block.Header.Previous.String(),
 		NextBlockHash:     ToReversedString(nextBlockHash),
 		AuxPow:            BytesToHexString(auxPow.Bytes()),
 	}
@@ -705,66 +674,6 @@ func GetBalanceByAsset(param Params) map[string]interface{} {
 	return ResponsePack(Success, balance.String())
 }
 
-func GetReceivedByAddress(param Params) map[string]interface{} {
-	address, ok := param.String("address")
-	if !ok {
-		return ResponsePack(InvalidParams, "need a parameter named address")
-	}
-	programHash, err := Uint168FromAddress(address)
-	if err != nil {
-		return ResponsePack(InvalidParams, "Invalid address: "+address)
-	}
-	UTXOsWithAssetID, err := chain.DefaultLedger.Store.GetUnspentsFromProgramHash(*programHash)
-	if err != nil {
-		return ResponsePack(InvalidParams, err)
-	}
-	UTXOs := UTXOsWithAssetID[chain.DefaultLedger.Blockchain.AssetID]
-	var totalValue Fixed64
-	for _, unspent := range UTXOs {
-		totalValue += unspent.Value
-	}
-
-	return ResponsePack(Success, totalValue.String())
-}
-
-func ListUnspent(param Params) map[string]interface{} {
-	bestHeight := chain.DefaultLedger.Blockchain.GetBestHeight()
-
-	var result []UTXOInfo
-	addresses, ok := param.ArrayString("addresses")
-	if !ok {
-		return ResponsePack(InvalidParams, "need addresses in an array!")
-	}
-	for _, address := range addresses {
-		programHash, err := Uint168FromAddress(address)
-		if err != nil {
-			return ResponsePack(InvalidParams, "Invalid address: "+address)
-		}
-		unspents, err := chain.DefaultLedger.Store.GetUnspentsFromProgramHash(*programHash)
-		if err != nil {
-			return ResponsePack(InvalidParams, "cannot get asset with program")
-		}
-
-		for _, unspent := range unspents[chain.DefaultLedger.Blockchain.AssetID] {
-			tx, height, err := chain.DefaultLedger.Store.GetTransaction(unspent.TxId)
-			if err != nil {
-				return ResponsePack(InternalError,
-					"unknown transaction "+unspent.TxId.String()+" from persisted utxo")
-			}
-			result = append(result, UTXOInfo{
-				AssetId:       ToReversedString(chain.DefaultLedger.Blockchain.AssetID),
-				Txid:          ToReversedString(unspent.TxId),
-				VOut:          unspent.Index,
-				Amount:        unspent.Value.String(),
-				Address:       address,
-				Confirmations: bestHeight - height + 1,
-				OutputLock:    tx.Outputs[unspent.Index].OutputLock,
-			})
-		}
-	}
-	return ResponsePack(Success, result)
-}
-
 func GetUnspends(param Params) map[string]interface{} {
 	addr, ok := param.String("addr")
 	if !ok {
@@ -879,43 +788,6 @@ func GetTransactionByHash(param Params) map[string]interface{} {
 	return ResponsePack(Success, GetTransactionInfo(header, txn))
 }
 
-func GetExistWithdrawTransactions(param Params) map[string]interface{} {
-	txsStr, ok := param.String("txs")
-	if !ok {
-		return ResponsePack(InvalidParams, "txs not found")
-	}
-
-	txsBytes, err := HexStringToBytes(txsStr)
-	if err != nil {
-		return ResponsePack(InvalidParams, "")
-	}
-
-	var txHashes []string
-	err = json.Unmarshal(txsBytes, &txHashes)
-	if err != nil {
-		return ResponsePack(InvalidParams, "")
-	}
-
-	var resultTxHashes []string
-	for _, txHash := range txHashes {
-		txHashBytes, err := HexStringToBytes(txHash)
-		if err != nil {
-			return ResponsePack(InvalidParams, "")
-		}
-		hash, err := Uint256FromBytes(txHashBytes)
-		if err != nil {
-			return ResponsePack(InvalidParams, "")
-		}
-		inStore := chain.DefaultLedger.Store.IsSidechainTxHashDuplicate(*hash)
-		inTxPool := ServerNode.IsDuplicateSidechainTx(*hash)
-		if inTxPool || inStore {
-			resultTxHashes = append(resultTxHashes, txHash)
-		}
-	}
-
-	return ResponsePack(Success, resultTxHashes)
-}
-
 func getPayloadInfo(p Payload) PayloadInfo {
 	switch object := p.(type) {
 	case *PayloadCoinBase:
@@ -928,26 +800,17 @@ func getPayloadInfo(p Payload) PayloadInfo {
 		obj.Amount = object.Amount.String()
 		obj.Controller = BytesToHexString(BytesReverse(object.Controller.Bytes()))
 		return obj
-	case *PayloadSideChainPow:
-		obj := new(SideChainPowInfo)
-		obj.BlockHeight = object.BlockHeight
+	case *PayloadSideMining:
+		obj := new(SideMiningInfo)
 		obj.SideBlockHash = object.SideBlockHash.String()
-		obj.SideGenesisHash = object.SideGenesisHash.String()
-		obj.SignedData = BytesToHexString(object.SignedData)
 		return obj
-	case *PayloadWithdrawFromSideChain:
-		obj := new(WithdrawFromSideChainInfo)
+	case *PayloadWithdrawAsset:
+		obj := new(WithdrawAssetInfo)
 		obj.BlockHeight = object.BlockHeight
-		obj.GenesisBlockAddress = object.GenesisBlockAddress
-		for _, hash := range object.SideChainTransactionHashes {
-			obj.SideChainTransactionHashes = append(obj.SideChainTransactionHashes, hash.String())
-		}
 		return obj
 	case *PayloadTransferCrossChainAsset:
 		obj := new(TransferCrossChainAssetInfo)
-		obj.CrossChainAddresses = object.CrossChainAddresses
-		obj.OutputIndexes = object.OutputIndexes
-		obj.CrossChainAmounts = object.CrossChainAmounts
+		obj.AddressesMap = object.AddressesMap
 		return obj
 	case *PayloadTransferAsset:
 	case *PayloadRecord:
@@ -957,12 +820,12 @@ func getPayloadInfo(p Payload) PayloadInfo {
 
 func VerifyAndSendTx(txn *Transaction) ErrCode {
 	// if transaction is verified unsucessfully then will not put it into transaction pool
-	if errCode := ServerNode.AppendToTxnPool(txn); errCode != Success {
+	if errCode := NodeForServers.AppendToTxnPool(txn); errCode != Success {
 		log.Warn("Can NOT add the transaction to TxnPool")
-		log.Info("[httpjsonrpc] VerifyTransaction failed when AppendToTxnPool. Errcode:", errCode)
+		log.Info("[httpjsonrpc] VerifyTransaction failed when AppendToTxnPool.")
 		return errCode
 	}
-	if err := ServerNode.Relay(nil, txn); err != nil {
+	if err := NodeForServers.Relay(nil, txn); err != nil {
 		log.Error("Xmit Tx Error:Relay transaction failed.", err)
 		return ErrXmitFail
 	}

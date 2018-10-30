@@ -28,12 +28,9 @@ func NewHandlerEIP001(node protocol.Noder) *HandlerEIP001 {
 // called to create the message instance with the CMD
 // which is the message type of the received message
 func (h *HandlerEIP001) OnMakeMessage(cmd string) (message p2p.Message, err error) {
-	// Nothing to do if node already disconnected
-	if h.node.State() == p2p.INACTIVITY {
-		return message, fmt.Errorf("revice message from INACTIVE node [0x%x]", h.node.ID())
-	}
-	// Filter messages through open port message filter
-	if err = h.FilterMessage(cmd); err != nil {
+	// Filter messages through SPV protocol
+	err = FilterMessage(h.node, cmd)
+	if err != nil {
 		return message, err
 	}
 	// Update node last active time
@@ -72,14 +69,6 @@ func (h *HandlerEIP001) OnMakeMessage(cmd string) (message p2p.Message, err erro
 // After message has been successful decoded, this method
 // will be called to pass the decoded message instance
 func (h *HandlerEIP001) OnMessageDecoded(message p2p.Message) {
-	log.Debugf("-----> [%s] from peer [0x%x] STARTED", message.CMD(), h.node.ID())
-	if err := h.HandleMessage(message); err != nil {
-		log.Error("Handle message error: " + err.Error())
-	}
-	log.Debugf("-----> [%s] from peer [0x%x] FINISHED", message.CMD(), h.node.ID())
-}
-
-func (h *HandlerEIP001) HandleMessage(message p2p.Message) error {
 	var err error
 	switch message := message.(type) {
 	case *msg.Ping:
@@ -107,7 +96,9 @@ func (h *HandlerEIP001) HandleMessage(message p2p.Message) error {
 	default:
 		h.HandlerBase.OnMessageDecoded(message)
 	}
-	return err
+	if err != nil {
+		log.Error("Handler message error: " + err.Error())
+	}
 }
 
 func (h *HandlerEIP001) onFilterLoad(msg *msg.FilterLoad) error {
@@ -128,8 +119,8 @@ func (h *HandlerEIP001) onPong(pong *msg.Pong) error {
 
 func (h *HandlerEIP001) onGetBlocks(req *msg.GetBlocks) error {
 	node := h.node
-	LocalNode.AcqSyncBlkReqSem()
-	defer LocalNode.RelSyncBlkReqSem()
+	LocalNode.AcqSyncHdrReqSem()
+	defer LocalNode.RelSyncHdrReqSem()
 
 	start := chain.DefaultLedger.Blockchain.LatestLocatorHash(req.Locator)
 	hashes, err := GetBlockHashes(*start, req.HashStop, p2p.MaxBlocksPerMsg)
@@ -160,8 +151,8 @@ func (h *HandlerEIP001) onInventory(inv *msg.Inventory) error {
 		return nil
 	}
 
-	// Attempt to find the final block in the inventory list.
-	// There may not be one.
+	// Attempt to find the final block in the inventory list.  There may
+	// not be one.
 	lastBlock := -1
 	for i := len(inv.InvList) - 1; i >= 0; i-- {
 		if inv.InvList[i].Type == msg.InvTypeBlock {
@@ -176,9 +167,6 @@ func (h *HandlerEIP001) onInventory(inv *msg.Inventory) error {
 		hash := iv.Hash
 		switch iv.Type {
 		case msg.InvTypeBlock:
-			if node.IsExternal() {
-				return fmt.Errorf("receive InvTypeBlock from external node")
-			}
 			haveInv := chain.DefaultLedger.BlockInLedger(hash) ||
 				chain.DefaultLedger.Blockchain.IsKnownOrphan(&hash) || LocalNode.IsRequestedBlock(hash)
 
@@ -207,7 +195,7 @@ func (h *HandlerEIP001) onInventory(inv *msg.Inventory) error {
 				SendGetBlocks(node, locator, common.EmptyHash)
 			}
 		case msg.InvTypeTx:
-			if _, ok := LocalNode.GetTransactionPool(false)[hash]; !ok {
+			if _, ok := node.GetTxnPool(false)[hash]; !ok {
 				getData.AddInvVect(iv)
 			}
 		default:
@@ -230,7 +218,7 @@ func (h *HandlerEIP001) onGetData(getData *msg.GetData) error {
 			if err != nil {
 				log.Debug("Can't get block from hash: ", iv.Hash, " ,send not found message")
 				notFound.AddInvVect(iv)
-				continue
+				return err
 			}
 			log.Debug("block height is ", block.Header.Height, " ,hash is ", iv.Hash.String())
 
@@ -245,7 +233,7 @@ func (h *HandlerEIP001) onGetData(getData *msg.GetData) error {
 			}
 
 		case msg.InvTypeTx:
-			tx, ok := LocalNode.GetTransactionPool(false)[iv.Hash]
+			tx, ok := node.GetTxnPool(false)[iv.Hash]
 			if !ok {
 				notFound.AddInvVect(iv)
 				continue
@@ -262,7 +250,7 @@ func (h *HandlerEIP001) onGetData(getData *msg.GetData) error {
 			if err != nil {
 				log.Debug("Can't get block from hash: ", iv.Hash, " ,send not found message")
 				notFound.AddInvVect(iv)
-				continue
+				return err
 			}
 
 			merkle, matchedIndexes := bloom.NewMerkleBlock(block, h.node.BloomFilter())
@@ -281,10 +269,6 @@ func (h *HandlerEIP001) onGetData(getData *msg.GetData) error {
 		}
 	}
 
-	if len(notFound.InvList) > 0 {
-		node.Send(notFound)
-	}
-
 	return nil
 }
 
@@ -293,16 +277,15 @@ func (h *HandlerEIP001) onBlock(msgBlock *msg.Block) error {
 	block := msgBlock.Block.(*core.Block)
 
 	hash := block.Hash()
-	if !LocalNode.IsNeighborNode(node.ID()) {
-		return fmt.Errorf("receive block message from unknown peer")
+	if !LocalNode.IsNeighborNoder(node) {
+		return fmt.Errorf("received block message from unknown peer")
 	}
 
 	if chain.DefaultLedger.BlockInLedger(hash) {
-		return fmt.Errorf("receive duplicated block %s", hash.String())
+		log.Trace("Receive duplicated block, ", hash.String())
+		return nil
 	}
 
-	// Update sync timer
-	LocalNode.syncTimer.update()
 	chain.DefaultLedger.Store.RemoveHeaderListElement(hash)
 	LocalNode.DeleteRequestedBlock(hash)
 
@@ -333,7 +316,7 @@ func (h *HandlerEIP001) onTx(msgTx *msg.Tx) error {
 	node := h.node
 	tx := msgTx.Transaction.(*core.Transaction)
 
-	if !LocalNode.IsNeighborNode(node.ID()) {
+	if !LocalNode.IsNeighborNoder(node) {
 		return fmt.Errorf("received transaction message from unknown peer")
 	}
 
@@ -376,7 +359,7 @@ func (h *HandlerEIP001) onMemPool(*msg.MemPool) error {
 		return fmt.Errorf("peer %d sent mempool request with SPV service disabled", h.node.ID())
 	}
 
-	txMemPool := LocalNode.GetTransactionPool(false)
+	txMemPool := LocalNode.GetTxnPool(false)
 	inv := msg.NewInventory()
 
 	for _, tx := range txMemPool {

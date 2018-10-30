@@ -23,6 +23,7 @@ func CalcNextRequiredDifficulty(prevNode *BlockNode, newBlockTime time.Time) (ui
 	// Genesis block.
 	if (prevNode.Height == 0) || (config.Parameters.ChainParam.Name == "RegNet") {
 		return uint32(config.Parameters.ChainParam.PowLimitBits), nil
+
 	}
 
 	// Return the previous block's difficulty requirements if this block
@@ -55,7 +56,8 @@ func CalcNextRequiredDifficulty(prevNode *BlockNode, newBlockTime time.Time) (ui
 	// Calculate new target difficulty as:
 	//  currentDifficulty * (adjustedTimespan / targetTimespan)
 	// The result uses integer division which means it will be slightly
-	// rounded down.  Bitcoind also uses integer division to calculate this result.
+	// rounded down.  Bitcoind also uses integer division to calculate this
+	// result.
 	oldTarget := CompactToBig(prevNode.Bits)
 	newTarget := new(big.Int).Mul(oldTarget, big.NewInt(adjustedTimespan))
 	newTarget.Div(newTarget, big.NewInt(targetTimespan))
@@ -67,7 +69,8 @@ func CalcNextRequiredDifficulty(prevNode *BlockNode, newBlockTime time.Time) (ui
 
 	// Log new target difficulty and return it.  The new target logging is
 	// intentionally converting the bits back to a number instead of using
-	// newTarget since conversion to the compact representation loses precision.
+	// newTarget since conversion to the compact representation loses
+	// precision.
 	newTargetBits := BigToCompact(newTarget)
 	log.Tracef("Difficulty retarget at block height %d", prevNode.Height+1)
 	log.Tracef("Old target %08x (%064x)", prevNode.Bits, oldTarget)
@@ -136,9 +139,6 @@ func CompactToBig(compact uint32) *big.Int {
 	isNegative := compact&0x00800000 != 0
 	exponent := uint(compact >> 24)
 
-	log.Tracef("mantissa %x", mantissa)
-	log.Tracef("exponent %d", exponent)
-
 	// Since the base for the exponent is 256, the exponent can be treated
 	// as the number of bytes to represent the full 256-bit number.  So,
 	// treat the exponent as the number of bytes and shift the mantissa
@@ -162,7 +162,7 @@ func CompactToBig(compact uint32) *big.Int {
 }
 
 func CalcCurrentDifficulty(currentBits uint32) string {
-	var genesisBlockBits = config.Parameters.ChainParam.PowLimitBits
+	var genesisBlockBits uint32 = config.Parameters.ChainParam.PowLimitBits
 	targetGenesisBlockBig := CompactToBig(genesisBlockBits)
 	targetCurrentBig := CompactToBig(currentBits)
 	return new(big.Int).Div(targetGenesisBlockBig, targetCurrentBig).String()
