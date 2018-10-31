@@ -12,8 +12,6 @@ import (
 	"github.com/ioeXNetwork/ioeX.MainChain/log"
 
 	. "github.com/ioeXNetwork/ioeX.Utility/common"
-
-	"github.com/elastos/Elastos.ELA/config"
 )
 
 const ValueNone = 0
@@ -49,8 +47,7 @@ type ChainStore struct {
 }
 
 func NewChainStore() (IChainStore, error) {
-	/* Hungjiun 20181012, open the chain store file according to network type of blockcahin */
-	st, err := NewLevelDB(config.Parameters.ChainParam.ChainStorePath)
+	st, err := NewLevelDB("Chain")
 	if err != nil {
 		return nil, err
 	}

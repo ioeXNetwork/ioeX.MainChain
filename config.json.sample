@@ -27,7 +27,7 @@
     "MinCrossChainTxFee": 10000,
     "PowConfiguration": {
       "PayToAddr": "8VYXVxKKSAxkmRrfmGpQR2Kc66XhG6m3ta",
-      "AutoMining": false,
+      "AutoMining": true,
       "MinerInfo": "IOEX",
       "MinTxFee": 100,
       "ActiveNet": "TestNet"

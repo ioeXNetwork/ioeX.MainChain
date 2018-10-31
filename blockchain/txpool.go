@@ -81,7 +81,7 @@ func (pool *TxPool) GetTransactionPool(hasMaxCount bool) map[Uint256]*Transactio
 		count = len(pool.txnList)
 	}
 	var num int
-	txnMap := make(map[Uint256]*Transaction)
+	txnMap := make(map[Uint256]*Transaction, count)
 	for txnId, tx := range pool.txnList {
 		txnMap[txnId] = tx
 		num++

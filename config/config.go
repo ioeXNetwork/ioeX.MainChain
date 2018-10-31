@@ -27,12 +27,11 @@ var (
 		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
 		PowLimitBits:       0x1f0008ff,
 		TargetTimePerBlock: time.Minute * 2,
-		TargetTimespan:     time.Minute * 2 * 10,
+		TargetTimespan:     time.Minute * 2 * 720,
 		AdjustmentFactor:   int64(4),
 		MaxOrphanBlocks:    10000,
 		MinMemoryNodes:     20160,
 		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain",
 	}
 	testNet = &ChainParams{
 		Name:               "TestNet",
@@ -44,7 +43,6 @@ var (
 		MaxOrphanBlocks:    10000,
 		MinMemoryNodes:     20160,
 		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain/TestNet",
 	}
 	regNet = &ChainParams{
 		Name:               "RegNet",
@@ -56,7 +54,6 @@ var (
 		MaxOrphanBlocks:    10000,
 		MinMemoryNodes:     20160,
 		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain/RegNet",
 	}
 )
 
@@ -115,7 +112,6 @@ type ChainParams struct {
 	MaxOrphanBlocks    int
 	MinMemoryNodes     uint32
 	CoinbaseLockTime   uint32
-	ChainStorePath     string
 }
 
 type configParams struct {

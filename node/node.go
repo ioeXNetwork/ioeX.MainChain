@@ -132,8 +132,6 @@ func InitLocalNode() protocol.Noder {
 	LocalNode.handshakeQueue.init()
 	LocalNode.syncTimer = newSyncTimer(LocalNode.stopSyncing)
 	LocalNode.initConnection()
-	LocalNode.SetHeight(uint64(chain.DefaultLedger.Blockchain.GetBestHeight()))
-
 	go LocalNode.Start()
 	go monitorNodeState()
 	return LocalNode

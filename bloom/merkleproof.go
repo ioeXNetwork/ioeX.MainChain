@@ -1,11 +1,9 @@
 package bloom
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/ioeXNetwork/ioeX.Utility/common"
-	"github.com/ioeXNetwork/ioeX.Utility/p2p/msg"
 )
 
 type MerkleProof struct {
@@ -34,15 +32,11 @@ func (p *MerkleProof) Deserialize(r io.Reader) error {
 		&p.Transactions,
 	)
 
-	count, err := common.ReadUint32(r)
+	hashes, err := common.ReadUint32(r)
 	if err != nil {
 		return err
 	}
-	if count > msg.MaxTxPerBlock {
-		return fmt.Errorf("MerkleProof.Deserialize too many transaction"+
-			" hashes for message [count %v, max %v]", count, msg.MaxTxPerBlock)
-	}
 
-	p.Hashes = make([]*common.Uint256, count)
+	p.Hashes = make([]*common.Uint256, hashes)
 	return common.ReadElements(r, &p.Hashes, &p.Flags)
 }

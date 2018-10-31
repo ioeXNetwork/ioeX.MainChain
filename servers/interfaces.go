@@ -21,15 +21,13 @@ import (
 )
 
 const (
-	AUXBLOCK_GENERATED_INTERVAL_SECONDS = 5
+	AUXBLOCK_GENERATED_INTERVAL_SECONDS = 60
 )
 
 var ServerNode Noder
 var LocalPow *pow.PowService
-
-var preChainHeight uint64
-var preTime int64
-var currentAuxBlock *Block
+var PreChainHeight uint64
+var PreTime int64
 
 func ToReversedString(hash Uint256) string {
 	return BytesToHexString(BytesReverse(hash[:]))
@@ -209,23 +207,19 @@ func SetLogLevel(param Params) map[string]interface{} {
 }
 
 func SubmitAuxBlock(param Params) map[string]interface{} {
-	blockHashHex, ok := param.String("blockhash")
+	blockHash, ok := param.String("blockhash")
 	if !ok {
 		return ResponsePack(InvalidParams, "parameter blockhash not found")
 	}
+	var msgAuxBlock *Block
+	if msgAuxBlock, ok = LocalPow.MsgBlock.BlockData[blockHash]; !ok {
+		log.Trace("[json-rpc:SubmitAuxBlock] block hash unknown", blockHash)
+		return ResponsePack(InternalError, "block hash unknown")
+	}
+
 	auxPow, ok := param.String("auxpow")
 	if !ok {
 		return ResponsePack(InvalidParams, "parameter auxpow not found")
-	}
-
-	blockHash, err := Uint256FromHexString(blockHashHex)
-	if err != nil {
-		return ResponsePack(InvalidParams, "bad blockhash")
-	}
-	var msgAuxBlock *Block
-	if msgAuxBlock, ok = LocalPow.AuxBlockPool.GetBlock(*blockHash); !ok {
-		log.Trace("[json-rpc:SubmitAuxBlock] block hash unknown", blockHash)
-		return ResponsePack(InternalError, "block hash unknown")
 	}
 
 	var aux aux.AuxPow
@@ -236,7 +230,7 @@ func SubmitAuxBlock(param Params) map[string]interface{} {
 	}
 
 	msgAuxBlock.Header.AuxPow = aux
-	_, _, err = chain.DefaultLedger.Blockchain.AddBlock(msgAuxBlock)
+	_, _, err := chain.DefaultLedger.Blockchain.AddBlock(msgAuxBlock)
 	if err != nil {
 		log.Trace(err)
 		return ResponsePack(InternalError, "adding block failed")
@@ -244,66 +238,84 @@ func SubmitAuxBlock(param Params) map[string]interface{} {
 
 	LocalPow.BroadcastBlock(msgAuxBlock)
 
-	log.Trace("AddBlock called finished and LocalPow.MsgBlock.MapNewBlock has been deleted completely")
+	LocalPow.MsgBlock.Mutex.Lock()
+	for key := range LocalPow.MsgBlock.BlockData {
+		delete(LocalPow.MsgBlock.BlockData, key)
+	}
+	LocalPow.MsgBlock.Mutex.Unlock()
+	log.Trace("AddBlock called finished and LocalPow.MsgBlock.BlockData has been deleted completely")
+
 	log.Info(auxPow, blockHash)
 	return ResponsePack(Success, true)
 }
 
+func GenerateAuxBlock(addr string) (*Block, string, bool) {
+	msgBlock := new(Block)
+	if ServerNode.Height() == 0 || PreChainHeight != ServerNode.Height() ||
+		time.Now().Unix()-PreTime > AUXBLOCK_GENERATED_INTERVAL_SECONDS {
+
+		if PreChainHeight != ServerNode.Height() {
+			PreChainHeight = ServerNode.Height()
+			PreTime = time.Now().Unix()
+		}
+
+		currentTxsCount := LocalPow.CollectTransactions(msgBlock)
+		if 0 == currentTxsCount {
+			// return nil, "currentTxs is nil", false
+		}
+
+		msgBlock, err := LocalPow.GenerateBlock(addr)
+		if nil != err {
+			return nil, "msgBlock generate err", false
+		}
+
+		// TODO is this hash needs to reverse ?
+		curHash := msgBlock.Hash()
+		curHashStr := BytesToHexString(curHash.Bytes())
+
+		LocalPow.MsgBlock.Mutex.Lock()
+		LocalPow.MsgBlock.BlockData[curHashStr] = msgBlock
+		LocalPow.MsgBlock.Mutex.Unlock()
+
+		PreChainHeight = ServerNode.Height()
+		PreTime = time.Now().Unix()
+
+		return msgBlock, curHashStr, true
+	}
+	return nil, "", false
+}
+
 func CreateAuxBlock(param Params) map[string]interface{} {
+	msgBlock, curHashStr, _ := GenerateAuxBlock(config.Parameters.PowConfiguration.PayToAddr)
+	if nil == msgBlock {
+		return ResponsePack(UnknownBlock, "")
+	}
+
 	var ok bool
 	LocalPow.PayToAddr, ok = param.String("paytoaddress")
 	if !ok {
-		return ResponsePack(InvalidParams, "parameter paytoaddress not found")
-	}
-
-	if ServerNode.Height() == 0 || preChainHeight != ServerNode.Height() ||
-		time.Now().Unix()-preTime > AUXBLOCK_GENERATED_INTERVAL_SECONDS {
-
-		if preChainHeight != ServerNode.Height() {
-			// Clear old blocks since they're obsolete now.
-			currentAuxBlock = nil
-			LocalPow.AuxBlockPool.ClearBlock()
-		}
-
-		// Create new block with nonce = 0
-		auxBlock, err := LocalPow.GenerateBlock(config.Parameters.PowConfiguration.PayToAddr)
-		if nil != err {
-			return ResponsePack(InternalError, "generate block failed")
-		}
-
-		// Update state only when CreateNewBlock succeeded
-		preChainHeight = ServerNode.Height()
-		preTime = time.Now().Unix()
-
-		// Save
-		currentAuxBlock = auxBlock
-		LocalPow.AuxBlockPool.AppendBlock(auxBlock)
-	}
-
-	// At this point, currentAuxBlock is always initialised: If we make it here without creating
-	// a new block above, it means that, in particular, preChainHeight == ServerNode.Height().
-	// But for that to happen, we must already have created a currentAuxBlock in a previous call,
-	// as preChainHeight is initialised only when currentAuxBlock is.
-	if currentAuxBlock == nil {
-		return ResponsePack(InternalError, "no block cached")
+		return ResponsePack(InvalidParams, "")
 	}
 
 	type AuxBlock struct {
-		ChainId           int     `json:"chainid"`
-		Height            uint64  `json:"height"`
-		CoinBaseValue     Fixed64 `json:"coinbasevalue"`
-		Bits              string  `json:"bits"`
-		Hash              string  `json:"hash"`
-		PreviousBlockHash string  `json:"previousblockhash"`
+		ChainId           int    `json:"chainid"`
+		Height            uint64 `json:"height"`
+		CoinBaseValue     int    `json:"coinbasevalue"`
+		Bits              string `json:"bits"`
+		Hash              string `json:"hash"`
+		PreviousBlockHash string `json:"previousblockhash"`
 	}
+
+	preHash := chain.DefaultLedger.Blockchain.CurrentBlockHash()
+	preHashStr := BytesToHexString(preHash.Bytes())
 
 	SendToAux := AuxBlock{
 		ChainId:           aux.AuxPowChainID,
 		Height:            ServerNode.Height(),
-		CoinBaseValue:     currentAuxBlock.Transactions[0].Outputs[1].Value,
-		Bits:              fmt.Sprintf("%x", currentAuxBlock.Header.Bits),
-		Hash:              currentAuxBlock.Hash().String(),
-		PreviousBlockHash: chain.DefaultLedger.Blockchain.CurrentBlockHash().String(),
+		CoinBaseValue:     1,                                       //transaction content
+		Bits:              fmt.Sprintf("%x", msgBlock.Header.Bits), //difficulty
+		Hash:              curHashStr,
+		PreviousBlockHash: preHashStr,
 	}
 	return ResponsePack(Success, &SendToAux)
 }
@@ -372,16 +384,15 @@ func DiscreteMining(param Params) map[string]interface{} {
 		return ResponsePack(InvalidParams, "")
 	}
 
-	ret := make([]string, 0)
+	ret := make([]string, count)
 
 	blockHashes, err := LocalPow.DiscreteMining(uint32(count))
 	if err != nil {
 		return ResponsePack(Error, err)
 	}
 
-	for _, hash := range blockHashes {
-		retStr := ToReversedString(*hash)
-		ret = append(ret, retStr)
+	for i, hash := range blockHashes {
+		ret[i] = ToReversedString(*hash)
 	}
 
 	return ResponsePack(Success, ret)

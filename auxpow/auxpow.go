@@ -62,8 +62,8 @@ func (ap *AuxPow) Serialize(w io.Writer) error {
 		}
 	}
 
-	index := uint32(ap.ParMerkleIndex)
-	err = common.WriteUint32(w, index)
+	idx := uint32(ap.ParMerkleIndex)
+	err = common.WriteUint32(w, idx)
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func (ap *AuxPow) Serialize(w io.Writer) error {
 		}
 	}
 
-	index = uint32(ap.AuxMerkleIndex)
-	err = common.WriteUint32(w, index)
+	idx = uint32(ap.AuxMerkleIndex)
+	err = common.WriteUint32(w, idx)
 	if err != nil {
 		return err
 	}
@@ -111,42 +111,42 @@ func (ap *AuxPow) Deserialize(r io.Reader) error {
 		return err
 	}
 
-	ap.ParCoinBaseMerkle = make([]common.Uint256, 0)
+	ap.ParCoinBaseMerkle = make([]common.Uint256, count)
 	for i := uint64(0); i < count; i++ {
-		var hash common.Uint256
-		err = hash.Deserialize(r)
+		temp := common.Uint256{}
+		err = temp.Deserialize(r)
 		if err != nil {
 			return err
 		}
-		ap.ParCoinBaseMerkle = append(ap.ParCoinBaseMerkle, hash)
+		ap.ParCoinBaseMerkle[i] = temp
 	}
 
-	index, err := common.ReadUint32(r)
+	temp, err := common.ReadUint32(r)
 	if err != nil {
 		return err
 	}
-	ap.ParMerkleIndex = int(index)
+	ap.ParMerkleIndex = int(temp)
 
 	count, err = common.ReadVarUint(r, 0)
 	if err != nil {
 		return err
 	}
 
-	ap.AuxMerkleBranch = make([]common.Uint256, 0)
+	ap.AuxMerkleBranch = make([]common.Uint256, count)
 	for i := uint64(0); i < count; i++ {
-		var hash common.Uint256
-		err = hash.Deserialize(r)
+		temp := common.Uint256{}
+		err = temp.Deserialize(r)
 		if err != nil {
 			return err
 		}
-		ap.AuxMerkleBranch = append(ap.AuxMerkleBranch, hash)
+		ap.AuxMerkleBranch[i] = temp
 	}
 
-	index, err = common.ReadUint32(r)
+	temp, err = common.ReadUint32(r)
 	if err != nil {
 		return err
 	}
-	ap.AuxMerkleIndex = int(index)
+	ap.AuxMerkleIndex = int(temp)
 
 	err = ap.ParBlockHeader.Deserialize(r)
 	if err != nil {

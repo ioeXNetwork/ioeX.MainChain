@@ -152,11 +152,10 @@ func CheckBlockContext(block *Block) error {
 		totalTxFee += GetTxFee(tx, DefaultLedger.Blockchain.AssetID)
 	}
 
-	// Reward in coinbase must match 23 IOEX
+	// Reward in coinbase must match inflation 4% per year
 	if rewardInCoinbase-totalTxFee != RewardAmountPerBlock {
 		return errors.New("reward amount in coinbase not correct")
 	}
-
 	return nil
 }
 

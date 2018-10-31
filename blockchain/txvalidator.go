@@ -202,30 +202,20 @@ func CheckTransactionOutput(version uint32, txn *Transaction) error {
 	}
 
 	if txn.IsCoinBaseTx() {
-		/*
-			if len(txn.Outputs) < 2 {
-				return errors.New("coinbase output is not enough, at least 2")
-			}
-		*/
-
-		//var totalReward = Fixed64(0)
-		//var foundationReward = Fixed64(0)
+		var totalReward = Fixed64(0)
+		var foundationReward = Fixed64(0)
 		for _, output := range txn.Outputs {
 			if output.AssetID != DefaultLedger.Blockchain.AssetID {
 				return errors.New("asset ID in coinbase is invalid")
 			}
-			//totalReward += output.Value
-			/*
-				if output.ProgramHash.IsEqual(FoundationAddress) {
-					foundationReward += output.Value
-				}
-			*/
-		}
-		/*
-			if Fixed64(foundationReward) < Fixed64(float64(totalReward)*0.3) {
-				return errors.New("Reward to foundation in coinbase < 30%")
+			totalReward += output.Value
+			if output.ProgramHash.IsEqual(FoundationAddress) {
+				foundationReward += output.Value
 			}
-		*/
+		}
+		if Fixed64(foundationReward) < Fixed64(float64(totalReward)*0.3) {
+			return errors.New("Reward to foundation in coinbase < 30%")
+		}
 
 		return nil
 	}

@@ -26,44 +26,22 @@ var TaskCh chan bool
 
 const (
 	maxNonce       = ^uint32(0) // 2^32 - 1
+	maxExtraNonce  = ^uint64(0) // 2^64 - 1
+	hpsUpdateSecs  = 10
 	hashUpdateSecs = 15
 )
 
-type auxBlockPool struct {
-	mapNewBlock map[common.Uint256]*Block
-	mutex       sync.RWMutex
-}
-
-func (auxpool *auxBlockPool) AppendBlock(block *Block) {
-	auxpool.mutex.Lock()
-	defer auxpool.mutex.Unlock()
-
-	auxpool.mapNewBlock[block.Hash()] = block
-}
-
-func (auxpool *auxBlockPool) ClearBlock() {
-	auxpool.mutex.Lock()
-	defer auxpool.mutex.Unlock()
-
-	for key := range auxpool.mapNewBlock {
-		delete(auxpool.mapNewBlock, key)
-	}
-}
-
-func (auxpool *auxBlockPool) GetBlock(hash common.Uint256) (*Block, bool) {
-	auxpool.mutex.RLock()
-	defer auxpool.mutex.RUnlock()
-
-	block, ok := auxpool.mapNewBlock[hash]
-	return block, ok
+type msgBlock struct {
+	BlockData map[string]*Block
+	Mutex     sync.Mutex
 }
 
 type PowService struct {
 	PayToAddr      string
+	MsgBlock       msgBlock
+	Mutex          sync.Mutex
 	Started        bool
 	discreteMining bool
-	AuxBlockPool   auxBlockPool
-	Mutex          sync.Mutex
 
 	blockPersistCompletedSubscriber events.Subscriber
 	RollbackTransactionSubscriber   events.Subscriber
@@ -72,11 +50,25 @@ type PowService struct {
 	quit chan struct{}
 }
 
+func (pow *PowService) CollectTransactions(MsgBlock *Block) int {
+	txs := 0
+	transactionsPool := node.LocalNode.GetTransactionPool(true)
+
+	for _, tx := range transactionsPool {
+		log.Trace(tx)
+		MsgBlock.Transactions = append(MsgBlock.Transactions, tx)
+		txs++
+	}
+	return txs
+}
+
 func (pow *PowService) CreateCoinbaseTx(nextBlockHeight uint32, minerAddr string) (*Transaction, error) {
 	minerProgramHash, err := common.Uint168FromAddress(minerAddr)
 	if err != nil {
 		return nil, err
 	}
+	// TODO: calculate the current delegate by votes
+	delegateProgramHash := FoundationAddress
 
 	pd := &PayloadCoinBase{
 		CoinbaseData: []byte(config.Parameters.PowConfiguration.MinerInfo),
@@ -96,7 +88,17 @@ func (pow *PowService) CreateCoinbaseTx(nextBlockHeight uint32, minerAddr string
 		{
 			AssetID:     DefaultLedger.Blockchain.AssetID,
 			Value:       0,
+			ProgramHash: FoundationAddress,
+		},
+		{
+			AssetID:     DefaultLedger.Blockchain.AssetID,
+			Value:       0,
 			ProgramHash: *minerProgramHash,
+		},
+		{
+			AssetID:     DefaultLedger.Blockchain.AssetID,
+			Value:       0,
+			ProgramHash: delegateProgramHash,
 		},
 	}
 
@@ -177,7 +179,11 @@ func (pow *PowService) GenerateBlock(minerAddr string) (*Block, error) {
 	totalReward := totalTxFee + blockReward
 
 	// PoW miners and DPoS are each equally allocated 35%. The remaining 30% goes to the Cyber Republic fund
-	msgBlock.Transactions[0].Outputs[0].Value = totalReward
+	rewardFoundation := common.Fixed64(float64(totalReward) * 0.3)
+	rewardMiner := common.Fixed64(float64(totalReward) * 0.35)
+	msgBlock.Transactions[0].Outputs[0].Value = rewardFoundation
+	msgBlock.Transactions[0].Outputs[1].Value = rewardMiner
+	msgBlock.Transactions[0].Outputs[2].Value = common.Fixed64(totalReward) - rewardFoundation - rewardMiner
 
 	txHash := make([]common.Uint256, 0, len(msgBlock.Transactions))
 	for _, tx := range msgBlock.Transactions {
@@ -206,9 +212,8 @@ func (pow *PowService) DiscreteMining(n uint32) ([]*common.Uint256, error) {
 
 	log.Tracef("Pow generating %d blocks", n)
 	i := uint32(0)
-	blockHashes := make([]*common.Uint256, 0)
-	//ticker := time.NewTicker(time.Second * hashUpdateSecs)
-	ticker := time.NewTicker(time.Minute * 2)
+	blockHashes := make([]*common.Uint256, n)
+	ticker := time.NewTicker(time.Second * hashUpdateSecs)
 	defer ticker.Stop()
 
 	for {
@@ -233,7 +238,7 @@ func (pow *PowService) DiscreteMining(n uint32) ([]*common.Uint256, error) {
 				}
 				pow.BroadcastBlock(msgBlock)
 				h := msgBlock.Hash()
-				blockHashes = append(blockHashes, &h)
+				blockHashes[i] = &h
 				i++
 				if i == n {
 					pow.Mutex.Lock()
@@ -251,36 +256,27 @@ func (pow *PowService) SolveBlock(MsgBlock *Block, ticker *time.Ticker) bool {
 	// fake a btc blockheader and coinbase
 	auxPow := auxpow.GenerateAuxPow(MsgBlock.Hash())
 	header := MsgBlock.Header
-	log.Tracef("header.Bits %08x", header.Bits) //hungjiun
 	targetDifficulty := CompactToBig(header.Bits)
-	log.Tracef("targetDifficulty %064x", targetDifficulty) //hungjiun
 
-	log.Trace("time start", time.Now()) //hungjiun
 	for i := uint32(0); i <= maxNonce; i++ {
-		/*
-			select {
-			case <-ticker.C:
-				// if !MsgBlock.Header.Previous.IsEqual(*DefaultLedger.Blockchain.BestChain.Hash) {
-				// 	return false
-				// }
-				log.Trace("time end 3", time.Now()) //hungjiun
-				return false
+		select {
+		case <-ticker.C:
+			// if !MsgBlock.Header.Previous.IsEqual(*DefaultLedger.Blockchain.BestChain.Hash) {
+			// 	return false
+			// }
+			return false
 
-			default:
-				// Non-blocking select to fall through
-			}
-		*/
+		default:
+			// Non-blocking select to fall through
+		}
 
 		auxPow.ParBlockHeader.Nonce = i
 		hash := auxPow.ParBlockHeader.Hash() // solve parBlockHeader hash
 		if HashToBig(&hash).Cmp(targetDifficulty) <= 0 {
-			log.Trace("hash : ", hash, ", i : ", i) //hungjiun
 			MsgBlock.Header.AuxPow = *auxPow
-			log.Trace("time end 1", time.Now()) //hungjiun
 			return true
 		}
 	}
-	log.Warn("time end 2", time.Now()) //hungjiun
 
 	return false
 }
@@ -347,7 +343,7 @@ func NewPowService() *PowService {
 		PayToAddr:      config.Parameters.PowConfiguration.PayToAddr,
 		Started:        false,
 		discreteMining: false,
-		AuxBlockPool:   auxBlockPool{mapNewBlock: make(map[common.Uint256]*Block)},
+		MsgBlock:       msgBlock{BlockData: make(map[string]*Block)},
 	}
 
 	pow.blockPersistCompletedSubscriber = DefaultLedger.Blockchain.BCEvents.Subscribe(events.EventBlockPersistCompleted, pow.BlockPersistCompleted)

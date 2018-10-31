@@ -136,9 +136,6 @@ func CompactToBig(compact uint32) *big.Int {
 	isNegative := compact&0x00800000 != 0
 	exponent := uint(compact >> 24)
 
-	log.Tracef("mantissa %x", mantissa)
-	log.Tracef("exponent %d", exponent)
-
 	// Since the base for the exponent is 256, the exponent can be treated
 	// as the number of bytes to represent the full 256-bit number.  So,
 	// treat the exponent as the number of bytes and shift the mantissa

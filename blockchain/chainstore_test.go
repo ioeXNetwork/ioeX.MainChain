@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"testing"
 
-	ioex "github.com/ioeXNetwork/ioeX.MainChain/core"
+	ela "github.com/ioeXNetwork/ioeX.MainChain/core"
 
 	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
@@ -22,7 +22,7 @@ func newTestChainStore() (*ChainStore, error) {
 	store := &ChainStore{
 		IStore:             st,
 		headerIndex:        map[uint32]common.Uint256{},
-		headerCache:        map[common.Uint256]*ioex.Header{},
+		headerCache:        map[common.Uint256]*ela.Header{},
 		headerIdx:          list.New(),
 		currentBlockHeight: 0,
 		storedHeaderCount:  0,
