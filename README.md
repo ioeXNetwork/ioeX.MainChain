@@ -2,6 +2,8 @@
 
 ## Summary
 
+ioeX leveraged Elastos functions to create its owned features and also business cases.
+
 ioeXcoin is the digital currency solution within ioeX eco system.
 
 This project is the source code that can build a full node of IOEX.
