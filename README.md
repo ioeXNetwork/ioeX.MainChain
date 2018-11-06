@@ -1,6 +1,7 @@
-# ioeX.MainChain [![Build Status](https://travis-ci.org/ioeXNetowk/ioeX.MainChain.svg?branch=master)](https://travis-ci.org/ioeXNetowk/ioeX.MainChain)
 
 ## Summary
+
+ioeX leveraged Elastos functions to create its owned features and also business cases.
 
 ioeXcoin is the digital currency solution within ioeXNetowk eco system.
 
