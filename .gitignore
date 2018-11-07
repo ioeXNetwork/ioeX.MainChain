@@ -12,3 +12,4 @@ Logs/
 /ioex
 /ioex-cli
 *.db
+rollback

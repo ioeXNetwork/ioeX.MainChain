@@ -13,5 +13,5 @@ var (
 	BlockGenerateInterval  = int64(config.Parameters.ChainParam.TargetTimePerBlock / time.Second)
 	GeneratedBlocksPerYear = 365 * 24 * 60 * 60 / BlockGenerateInterval
 	//RewardAmountPerBlock   = common.Fixed64(float64(InflationPerYear) / float64(GeneratedBlocksPerYear))
-	RewardAmountPerBlock = common.Fixed64(float64(23 * 100000000))
+	RewardAmountPerBlock = common.Fixed64(float64(4 * 100000000))
 )

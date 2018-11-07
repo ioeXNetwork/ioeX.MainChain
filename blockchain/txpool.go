@@ -82,8 +82,8 @@ func (pool *TxPool) GetTransactionPool(hasMaxCount bool) map[Uint256]*Transactio
 	}
 	var num int
 	txnMap := make(map[Uint256]*Transaction)
-	for txnId, tx := range pool.txnList {
-		txnMap[txnId] = tx
+	for txnID, tx := range pool.txnList {
+		txnMap[txnID] = tx
 		num++
 		if num >= count {
 			break
@@ -253,6 +253,9 @@ func (pool *TxPool) verifyDuplicateSidechainTx(txn *Transaction) error {
 
 // check and replace the duplicate sidechainpow tx
 func (pool *TxPool) replaceDuplicateSideChainPowTx(txn *Transaction) {
+	var replaceList []*Transaction
+
+	pool.RLock()
 	for _, v := range pool.txnList {
 		if v.TxType == SideChainPow {
 			oldPayload := v.Payload.Data(SideChainPowPayloadVersion)
@@ -262,11 +265,16 @@ func (pool *TxPool) replaceDuplicateSideChainPowTx(txn *Transaction) {
 			newGenesisHashData := newPayload[32:64]
 
 			if bytes.Equal(oldGenesisHashData, newGenesisHashData) {
-				txid := txn.Hash()
-				log.Warn("replace sidechainpow transaction, txid=", txid.String())
-				pool.removeTransaction(v)
+				replaceList = append(replaceList, txn)
 			}
 		}
+	}
+	pool.RUnlock()
+
+	for _, txn := range replaceList {
+				txid := txn.Hash()
+		log.Info("replace sidechainpow transaction, txid=", txid.String())
+		pool.removeTransaction(txn)
 	}
 }
 
@@ -333,13 +341,13 @@ func (pool *TxPool) addToTxList(txn *Transaction) bool {
 	return true
 }
 
-func (pool *TxPool) delFromTxList(txId Uint256) bool {
+func (pool *TxPool) delFromTxList(txID Uint256) bool {
 	pool.Lock()
 	defer pool.Unlock()
-	if _, ok := pool.txnList[txId]; !ok {
+	if _, ok := pool.txnList[txID]; !ok {
 		return false
 	}
-	delete(pool.txnList, txId)
+	delete(pool.txnList, txID)
 	return true
 }
 
@@ -347,8 +355,8 @@ func (pool *TxPool) copyTxList() map[Uint256]*Transaction {
 	pool.RLock()
 	defer pool.RUnlock()
 	txnMap := make(map[Uint256]*Transaction, len(pool.txnList))
-	for txnId, txn := range pool.txnList {
-		txnMap[txnId] = txn
+	for txnID, txn := range pool.txnList {
+		txnMap[txnID] = txn
 	}
 	return txnMap
 }
@@ -449,13 +457,13 @@ func (pool *TxPool) RemoveTransaction(txn *Transaction) {
 	}
 }
 
-func GetTxFee(tx *Transaction, assetId Uint256) Fixed64 {
+func GetTxFee(tx *Transaction, assetID Uint256) Fixed64 {
 	feeMap, err := GetTxFeeMap(tx)
 	if err != nil {
 		return 0
 	}
 
-	return feeMap[assetId]
+	return feeMap[assetID]
 }
 
 func GetTxFeeMap(tx *Transaction) (map[Uint256]Fixed64, error) {

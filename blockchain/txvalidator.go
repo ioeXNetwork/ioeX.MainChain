@@ -83,20 +83,6 @@ func CheckTransactionContext(txn *Transaction) ErrCode {
 		}
 	}
 
-	if txn.IsWithdrawFromSideChainTx() {
-		if err := CheckWithdrawFromSideChainTransaction(txn); err != nil {
-			log.Warn("[CheckWithdrawFromSideChainTransaction],", err)
-			return ErrSidechainTxDuplicate
-		}
-	}
-
-	if txn.IsTransferCrossChainAssetTx() {
-		if err := CheckTransferCrossChainAssetTransaction(txn); err != nil {
-			log.Warn("[CheckTransferCrossChainAssetTransaction],", err)
-			return ErrInvalidOutput
-		}
-	}
-
 	// check double spent transaction
 	if DefaultLedger.IsDoubleSpend(txn) {
 		log.Warn("[CheckTransactionContext] IsDoubleSpend check faild.")
@@ -106,7 +92,21 @@ func CheckTransactionContext(txn *Transaction) ErrCode {
 	references, err := DefaultLedger.Store.GetTxReference(txn)
 	if err != nil {
 		log.Warn("[CheckTransactionContext] get transaction reference failed")
-		return ErrUnknownReferedTx
+		return ErrUnknownReferredTx
+	}
+
+	if txn.IsWithdrawFromSideChainTx() {
+		if err := CheckWithdrawFromSideChainTransaction(txn, references); err != nil {
+			log.Warn("[CheckWithdrawFromSideChainTransaction],", err)
+			return ErrSidechainTxDuplicate
+		}
+	}
+
+	if txn.IsTransferCrossChainAssetTx() {
+		if err := CheckTransferCrossChainAssetTransaction(txn, references); err != nil {
+			log.Warn("[CheckTransferCrossChainAssetTransaction],", err)
+			return ErrInvalidOutput
+		}
 	}
 
 	if err := CheckTransactionUTXOLock(txn, references); err != nil {
@@ -148,17 +148,39 @@ func CheckDestructionAddress(references map[*Input]*Output) error {
 }
 
 func CheckTransactionCoinbaseOutputLock(txn *Transaction) error {
+	type lockTxInfo struct {
+		isCoinbaseTx bool
+		locktime     uint32
+	}
+	transactionCache := make(map[Uint256]lockTxInfo)
+	currentHeight := DefaultLedger.Store.GetHeight()
+	var referTxn *Transaction
 	for _, input := range txn.Inputs {
+		var lockHeight uint32
+		var isCoinbase bool
 		referHash := input.Previous.TxID
-		referTxn, _, _ := DefaultLedger.Store.GetTransaction(referHash)
-		if referTxn.IsCoinBaseTx() {
-			lockHeight := referTxn.LockTime
-			currentHeight := DefaultLedger.Store.GetHeight()
-			if currentHeight-lockHeight < config.Parameters.ChainParam.CoinbaseLockTime {
+		if _, ok := transactionCache[referHash]; ok {
+			lockHeight = transactionCache[referHash].locktime
+			isCoinbase = transactionCache[referHash].isCoinbaseTx
+		} else {
+			var err error
+			referTxn, _, err = DefaultLedger.Store.GetTransaction(referHash)
+			// TODO
+			// we have executed DefaultLedger.Store.GetTxReference(txn) before.
+			//So if we can't find referTxn here, there must be a data inconsistent problem,
+			// because we do not add lock correctly.This problem will be fixed later on.
+			if err != nil {
+				return errors.New("[CheckTransactionCoinbaseOutputLock] get tx reference failed:" + err.Error())
+			}
+			lockHeight = referTxn.LockTime
+			isCoinbase = referTxn.IsCoinBaseTx()
+			transactionCache[referHash] = lockTxInfo{isCoinbase, lockHeight}
+		}
+
+		if isCoinbase && currentHeight-lockHeight < config.Parameters.ChainParam.CoinbaseLockTime {
 				return errors.New("cannot unlock coinbase transaction output")
 			}
 		}
-	}
 	return nil
 }
 
@@ -459,7 +481,7 @@ func CheckSideChainPowConsensus(txn *Transaction, arbitrator []byte) error {
 	return nil
 }
 
-func CheckWithdrawFromSideChainTransaction(txn *Transaction) error {
+func CheckWithdrawFromSideChainTransaction(txn *Transaction, references map[*Input]*Output) error {
 	witPayload, ok := txn.Payload.(*PayloadWithdrawFromSideChain)
 	if !ok {
 		return errors.New("Invalid withdraw from side chain payload type")
@@ -470,11 +492,7 @@ func CheckWithdrawFromSideChainTransaction(txn *Transaction) error {
 		}
 	}
 
-	reference, err := DefaultLedger.Store.GetTxReference(txn)
-	if err != nil {
-		return errors.New("Invalid transaction inputs")
-	}
-	for _, v := range reference {
+for _, v := range references {
 		if bytes.Compare(v.ProgramHash[0:1], []byte{PrefixCrossChain}) != 0 {
 			return errors.New("Invalid transaction inputs address, without \"X\" at beginning")
 		}
@@ -483,7 +501,7 @@ func CheckWithdrawFromSideChainTransaction(txn *Transaction) error {
 	return nil
 }
 
-func CheckTransferCrossChainAssetTransaction(txn *Transaction) error {
+func CheckTransferCrossChainAssetTransaction(txn *Transaction, references map[*Input]*Output) error {
 	payloadObj, ok := txn.Payload.(*PayloadTransferCrossChainAsset)
 	if !ok {
 		return errors.New("Invalid transfer cross chain asset payload type")
@@ -523,11 +541,7 @@ func CheckTransferCrossChainAssetTransaction(txn *Transaction) error {
 
 	//check transaction fee
 	var totalInput Fixed64
-	reference, err := DefaultLedger.Store.GetTxReference(txn)
-	if err != nil {
-		return errors.New("Invalid transaction inputs")
-	}
-	for _, v := range reference {
+for _, v := range references {
 		totalInput += v.Value
 	}
 
