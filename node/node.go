@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math/rand"
 	"net"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -112,9 +111,9 @@ func NewNode(conn net.Conn, inbound bool) *node {
 		conn.LocalAddr(), conn.RemoteAddr(), conn.RemoteAddr().Network())
 
 	addr := conn.RemoteAddr().String()
-	ip := addr
-	if i := strings.LastIndex(addr, ":"); i > 0 {
-		ip = addr[:i-1]
+	ip, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		log.Error("node init err:", err)
 	}
 	n := node{
 		link: link{
@@ -289,8 +288,10 @@ func (node *node) WaitForSyncFinish() {
 		bc := chain.DefaultLedger.Blockchain
 		log.Info("[", len(bc.Index), len(bc.BlockCache), len(bc.Orphans), "]")
 
-		heights := node.GetNeighborHeights()
-		log.Debug("others height is ", heights)
+		addresses, heights := node.GetInternalNeighborAddressAndHeights()
+		log.Debug("others height is (internal only) ", heights)
+		log.Debug("others address is (internal only) ", addresses)
+
 
 		if CompareHeight(uint64(chain.DefaultLedger.Blockchain.BlockHeight), heights) > 0 {
 			LocalNode.SetSyncHeaders(false)
@@ -396,8 +397,9 @@ func (node *node) SetSyncHeaders(b bool) {
 }
 
 func (node *node) needSync() bool {
-	heights := node.GetNeighborHeights()
-	log.Info("nbr height-->", heights, chain.DefaultLedger.Blockchain.BlockHeight)
+	addresses, heights := node.GetInternalNeighborAddressAndHeights()
+	log.Info("internal nbr height-->", heights, chain.DefaultLedger.Blockchain.BlockHeight)
+	log.Info("internal nbr address ", addresses)
 	return CompareHeight(uint64(chain.DefaultLedger.Blockchain.BlockHeight), heights) < 0
 }
 

@@ -2,7 +2,6 @@ package node
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	chain "github.com/ioeXNetwork/ioeX.MainChain/blockchain"
@@ -96,13 +95,13 @@ func (h *HandlerBase) onVersion(version *msg.Version) {
 		return
 	}
 
-	// Obsolete node
-	n, ret := LocalNode.DelNeighborNode(version.Nonce)
-	if ret == true {
-		log.Info(fmt.Sprintf("Node %s reconnect", n))
-		// Close the connection and release the node soure
-		n.Disconnect()
-	}
+	//// Obsolete node
+	//n, ret := LocalNode.DelNeighborNode(version.Nonce)
+	//if ret == true {
+	//	log.Info(fmt.Sprintf("Node %s reconnect", n))
+	//	// Close the connection and release the node source
+	//	n.Disconnect()
+	//}
 
 	node.UpdateInfo(time.Unix(int64(version.TimeStamp), 0), version.Version,
 		version.Services, version.Port, version.Nonce, version.Relay, version.Height)
@@ -148,7 +147,7 @@ func (h *HandlerBase) onVerAck(verAck *msg.VerAck) {
 
 	// Finish handshake
 	LocalNode.RemoveFromHandshakeQueue(node)
-	LocalNode.RemoveFromConnectingList(node.NetAddress().String())
+	LocalNode.RemoveFromConnectingList(node.Addr())
 
 	// Add node to neighbor list
 	LocalNode.AddNeighborNode(node)
@@ -188,6 +187,12 @@ func (h *HandlerBase) onGetAddr(getAddr *msg.GetAddr) {
 		addrs = LocalNode.RandSelectAddresses()
 	}
 
+	for i, addr := range addrs {
+		if h.node.NetAddress().String() == addr.String() {
+			// do not send client's address to the client itself
+			addrs = append(addrs[:i], addrs[i+1:]...)
+		}
+	}
 
 	if len(addrs) > 0 {
 	h.node.SendMessage(msg.NewAddr(addrs))
@@ -195,11 +200,14 @@ func (h *HandlerBase) onGetAddr(getAddr *msg.GetAddr) {
 }
 
 func (h *HandlerBase) onAddr(msgAddr *msg.Addr) {
+	if h.node.IsExternal() {
+		// we don't accept address list from a external node/spv...etc.
+		return
+	}
 	for _, addr := range msgAddr.AddrList {
 		if addr.Port == 0 {
 			continue
 		}
-
 		//save the node address in address list
 		LocalNode.AddKnownAddress(addr)
 	}

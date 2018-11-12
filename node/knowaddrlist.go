@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ioeXNetwork/ioeX.MainChain/log"
 	. "github.com/ioeXNetwork/ioeX.MainChain/protocol"
 
 	"github.com/ioeXNetwork/ioeX.Utility/p2p"
@@ -134,6 +135,13 @@ func (al *KnownAddressList) UpdateAddress(na *p2p.NetAddress) {
 }
 
 func (al *KnownAddressList) AddKnownAddress(na *p2p.NetAddress) {
+	if na.IP == nil {
+		log.Error("net address ip is nil, return.")
+		return
+	} else if na.IP.To4() == nil {
+		log.Error("net address ip to4 is nil, return. IP:", na.IP)
+		return
+	}
 	al.Lock()
 	defer al.Unlock()
 

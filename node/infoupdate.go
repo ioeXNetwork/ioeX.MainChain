@@ -181,13 +181,13 @@ func (node *node) ConnectNodes() {
 	}
 
 	if total > DefaultMaxPeers {
-		DisconnectNode(node.GetANeighbourRandomly().ID())
+		DisconnectNode(node.GetExternalNeighbourRandomly().ID())
 	}
 }
 
 func (node *node) NetAddress() *p2p.NetAddress {
 	return &p2p.NetAddress{
-		IP:        node.IP(),
+		IP:        node.IP().To4(),
 		Timestamp: time.Now(),
 		Services:  node.Services(),
 		Port:      node.Port(),
