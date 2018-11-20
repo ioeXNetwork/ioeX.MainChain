@@ -34,6 +34,18 @@ var (
 	oneLsh256 = new(big.Int).Lsh(big.NewInt(1), 256)
 )
 
+var FoundationAddress1 Uint168
+var FoundationAddress2 Uint168
+var FoundationAddress3 Uint168
+var FoundationAddress4 Uint168
+var FoundationAddress5 Uint168
+var FoundationAddress6 Uint168
+var FoundationAddress7 Uint168
+var FoundationAddress8 Uint168
+var FoundationAddress9 Uint168
+var FoundationAddress10 Uint168
+var FoundationAddress11 Uint168
+
 type Blockchain struct {
 	BlockHeight    uint32
 	GenesisHash    Uint256
@@ -126,8 +138,53 @@ func GetGenesisBlock() (*Block, error) {
 	coinBase.Outputs = []*Output{
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000,
-			ProgramHash: FoundationAddress,
+			Value:       20000 * 10000 * 100000000 * 20 / 100, //20%
+			ProgramHash: FoundationAddress1,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 35 / 100, //35%
+			ProgramHash: FoundationAddress2,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 17 / 100, //17%
+			ProgramHash: FoundationAddress3,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 45 / 1000, //4.5%
+			ProgramHash: FoundationAddress4,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 45 / 1000, //4.5%
+			ProgramHash: FoundationAddress5,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 1 / 100, //1%
+			ProgramHash: FoundationAddress6,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 2 / 100, //2%
+			ProgramHash: FoundationAddress7,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 3 / 100, //3%
+			ProgramHash: FoundationAddress8,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 5 / 100, //5%
+			ProgramHash: FoundationAddress9,
+		},
+		{
+			AssetID:     ioeXCoin.Hash(),
+			Value:       20000 * 10000 * 100000000 * 5 / 100, //5%
+			ProgramHash: FoundationAddress10,
 		},
 	}
 

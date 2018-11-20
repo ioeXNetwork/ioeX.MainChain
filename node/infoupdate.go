@@ -181,7 +181,13 @@ func (node *node) ConnectNodes() {
 	}
 
 	if total > DefaultMaxPeers {
-		DisconnectNode(node.GetExternalNeighbourRandomly().ID())
+		/* */
+		external := node.GetExternalConnectionCount()
+		if external > 0 {
+			DisconnectNode(node.GetExternalNeighbourRandomly().ID())
+		} else {
+			DisconnectNode(node.GetInternalNeighbourRandomly().ID())
+		}
 	}
 }
 

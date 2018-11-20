@@ -153,7 +153,7 @@ func CheckBlockContext(block *Block) error {
 	}
 
 	// Reward in coinbase must match 23 IOEX
-	if rewardInCoinbase-totalTxFee != RewardAmountPerBlock {
+	if rewardInCoinbase-totalTxFee != TotalRewardAmountPerBlock {
 		return errors.New("reward amount in coinbase not correct")
 	}
 	return nil

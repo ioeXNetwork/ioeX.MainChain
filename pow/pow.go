@@ -24,9 +24,10 @@ import (
 
 var TaskCh chan bool
 
-const (
-	maxNonce       = ^uint32(0) // 2^32 - 1
-	hashUpdateSecs = 15
+var (
+	maxNonce = ^uint32(0) // 2^32 - 1
+	//hashUpdateSecs = 15
+	hashUpdateSecs = (config.Parameters.ChainParam.TargetTimePerBlock / time.Second) * 2
 )
 
 type auxBlockPool struct {
@@ -93,6 +94,11 @@ func (pow *PowService) CreateCoinbaseTx(nextBlockHeight uint32, minerAddr string
 		},
 	}
 	txn.Outputs = []*Output{
+		{
+			AssetID:     DefaultLedger.Blockchain.AssetID,
+			Value:       0,
+			ProgramHash: FoundationAddress11,
+		},
 		{
 			AssetID:     DefaultLedger.Blockchain.AssetID,
 			Value:       0,
@@ -173,10 +179,11 @@ func (pow *PowService) GenerateBlock(minerAddr string) (*Block, error) {
 		txCount++
 	}
 
-	blockReward := RewardAmountPerBlock
+	blockReward := MinerRewardAmountPerBlock
 	totalReward := totalTxFee + blockReward
 
-	msgBlock.Transactions[0].Outputs[0].Value = totalReward
+	msgBlock.Transactions[0].Outputs[0].Value = FoundationRewardAmountPerBlock
+	msgBlock.Transactions[0].Outputs[1].Value = totalReward
 
 	txHash := make([]common.Uint256, 0, len(msgBlock.Transactions))
 	for _, tx := range msgBlock.Transactions {
@@ -250,36 +257,29 @@ func (pow *PowService) SolveBlock(MsgBlock *Block) bool {
 	// fake a btc blockheader and coinbase
 	auxPow := auxpow.GenerateAuxPow(MsgBlock.Hash())
 	header := MsgBlock.Header
-	log.Debugf("header.Bits %08x", header.Bits) //hungjiun
+	log.Debugf("header.Bits %08x", header.Bits)
 	targetDifficulty := CompactToBig(header.Bits)
-	log.Debugf("targetDifficulty %064x", targetDifficulty) //hungjiun
+	log.Debugf("targetDifficulty %064x", targetDifficulty)
 
-	log.Debug("time start", time.Now()) //hungjiun
 	for i := uint32(0); i <= maxNonce; i++ {
-		/*
-			select {
-			case <-ticker.C:
-				// if !MsgBlock.Header.Previous.IsEqual(*DefaultLedger.Blockchain.BestChain.Hash) {
-				// 	return false
-				// }
-				log.Trace("time end 3", time.Now()) //hungjiun
-				return false
+		select {
+		case <-ticker.C:
+			// if !MsgBlock.Header.Previous.IsEqual(*DefaultLedger.Blockchain.BestChain.Hash) {
+			// 	return false
+			// }
+			return false
 
-			default:
-				// Non-blocking select to fall through
-			}
-		*/
+		default:
+			// Non-blocking select to fall through
+		}
 
 		auxPow.ParBlockHeader.Nonce = i
 		hash := auxPow.ParBlockHeader.Hash() // solve parBlockHeader hash
 		if HashToBig(&hash).Cmp(targetDifficulty) <= 0 {
-			log.Debug("hash : ", hash, ", i : ", i) //hungjiun
 			MsgBlock.Header.AuxPow = *auxPow
-			log.Debug("time end 1", time.Now()) //hungjiun
 			return true
 		}
 	}
-	log.Warn("time end 2", time.Now()) //hungjiun
 
 	return false
 }

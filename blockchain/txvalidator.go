@@ -137,11 +137,11 @@ func CheckTransactionContext(txn *Transaction) ErrCode {
 func CheckDestructionAddress(references map[*Input]*Output) error {
 	for _, output := range references {
 		// this uint168 code
-		// is the program hash of the Elastos foundation destruction address ELANULLXXXXXXXXXXXXXXXXXXXXXYvs3rr
+		// is the program hash of the IOEX foundation destruction address ELANULLXXXXXXXXXXXXXXXXXXXXXYvs3rr
 		// we allow no output from destruction address.
 		// So add a check here in case someone crack the private key of this address.
 		if output.ProgramHash == Uint168([21]uint8{33, 32, 254, 229, 215, 235, 62, 92, 125, 49, 151, 254, 207, 108, 13, 227, 15, 136, 154, 206, 247}) {
-			return errors.New("cannot use utxo in the Elastos foundation destruction address")
+			return errors.New("cannot use utxo in the IOEX foundation destruction address")
 		}
 	}
 	return nil
@@ -178,9 +178,9 @@ func CheckTransactionCoinbaseOutputLock(txn *Transaction) error {
 		}
 
 		if isCoinbase && currentHeight-lockHeight < config.Parameters.ChainParam.CoinbaseLockTime {
-				return errors.New("cannot unlock coinbase transaction output")
-			}
+			return errors.New("cannot unlock coinbase transaction output")
 		}
+	}
 	return nil
 }
 
@@ -224,30 +224,26 @@ func CheckTransactionOutput(version uint32, txn *Transaction) error {
 	}
 
 	if txn.IsCoinBaseTx() {
-		/*
-			if len(txn.Outputs) < 2 {
-				return errors.New("coinbase output is not enough, at least 2")
-			}
-		*/
+		if len(txn.Outputs) < 2 {
+			return errors.New("coinbase output is not enough, at least 2")
+		}
 
-		//var totalReward = Fixed64(0)
-		//var foundationReward = Fixed64(0)
+		var totalReward = Fixed64(0)
+		var foundationReward = Fixed64(0)
 		for _, output := range txn.Outputs {
 			if output.AssetID != DefaultLedger.Blockchain.AssetID {
 				return errors.New("asset ID in coinbase is invalid")
 			}
-			//totalReward += output.Value
-			/*
-				if output.ProgramHash.IsEqual(FoundationAddress) {
-					foundationReward += output.Value
-				}
-			*/
-		}
-		/*
-			if Fixed64(foundationReward) < Fixed64(float64(totalReward)*0.3) {
-				return errors.New("Reward to foundation in coinbase < 30%")
+			totalReward += output.Value
+
+			if output.ProgramHash.IsEqual(FoundationAddress11) {
+				foundationReward += output.Value
 			}
-		*/
+		}
+
+		if Fixed64(foundationReward) < FoundationRewardAmountPerBlock {
+			return errors.New("Reward to foundation in coinbase < 19")
+		}
 
 		return nil
 	}
@@ -492,7 +488,7 @@ func CheckWithdrawFromSideChainTransaction(txn *Transaction, references map[*Inp
 		}
 	}
 
-for _, v := range references {
+	for _, v := range references {
 		if bytes.Compare(v.ProgramHash[0:1], []byte{PrefixCrossChain}) != 0 {
 			return errors.New("Invalid transaction inputs address, without \"X\" at beginning")
 		}
@@ -541,7 +537,7 @@ func CheckTransferCrossChainAssetTransaction(txn *Transaction, references map[*I
 
 	//check transaction fee
 	var totalInput Fixed64
-for _, v := range references {
+	for _, v := range references {
 		totalInput += v.Value
 	}
 

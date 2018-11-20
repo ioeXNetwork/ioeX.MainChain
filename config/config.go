@@ -23,40 +23,73 @@ var (
 	Parameters configParams
 	Version    string
 	mainNet    = &ChainParams{
-		Name:               "MainNet",
-		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
-		PowLimitBits:       0x1e00f8ff,
-		TargetTimePerBlock: time.Minute * 2,
-		TargetTimespan:     time.Minute * 2 * 720,
-		AdjustmentFactor:   int64(4),
-		MaxOrphanBlocks:    10000,
-		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain",
+		Name:                "MainNet",
+		PowLimit:            new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
+		PowLimitBits:        0x1e00f8ff,
+		TargetTimePerBlock:  time.Minute * 2,
+		TargetTimespan:      time.Minute * 2 * 720,
+		AdjustmentFactor:    int64(4),
+		MaxOrphanBlocks:     10000,
+		MinMemoryNodes:      20160,
+		CoinbaseLockTime:    100,
+		ChainStorePath:      "Chain",
+		FoundationAddress1:  "ESecJviepcBa2XtVj3nuetu2JDCKCvynBY",
+		FoundationAddress2:  "EbMkgA5QLUADNuAzxTBdte1coctPkR8ffv",
+		FoundationAddress3:  "EP1k2Wn8SZtug76fHnjJQWZ3tMK7x4TiMf",
+		FoundationAddress4:  "Efz2odsd1ydTKPVEwM2nyCSXdDnQr6JLeR",
+		FoundationAddress5:  "Ef3vywpTQcZR9LbFbquTE7QFDQqbSahBMR",
+		FoundationAddress6:  "ENgVAKFNRvTuq5mjSeqFwvKGZFsNz2kHsz",
+		FoundationAddress7:  "EHnhzh7754u8zLtKbj89bF6Px7RvfqycJV",
+		FoundationAddress8:  "EMuJFbZfg8ASyUMXumMgXRYHnBeNiAX5Hs",
+		FoundationAddress9:  "EXhhAdBrtCSTD2B3jAT71vigg5FoAn6Ymy",
+		FoundationAddress10: "EYA9k7gSduNncYxpFbfChVFrEWHoXG1EWA",
+		FoundationAddress11: "EStnMUGY1ECAkvKJQT5AN6rsZoCHXXaYwx",
 	}
 	testNet = &ChainParams{
-		Name:               "TestNet",
-		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
-		PowLimitBits:       0x1e1da5ff,
-		TargetTimePerBlock: time.Second * 10,
-		TargetTimespan:     time.Second * 10 * 10,
-		AdjustmentFactor:   int64(4),
-		MaxOrphanBlocks:    10000,
-		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain/TestNet",
+		Name:                "TestNet",
+		PowLimit:            new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
+		PowLimitBits:        0x1e1da5ff,
+		TargetTimePerBlock:  time.Second * 10,
+		TargetTimespan:      time.Second * 10 * 10,
+		AdjustmentFactor:    int64(4),
+		MaxOrphanBlocks:     10000,
+		MinMemoryNodes:      20160,
+		CoinbaseLockTime:    100,
+		ChainStorePath:      "Chain/TestNet",
+		FoundationAddress1:  "ESecJviepcBa2XtVj3nuetu2JDCKCvynBY",
+		FoundationAddress2:  "EbMkgA5QLUADNuAzxTBdte1coctPkR8ffv",
+		FoundationAddress3:  "EP1k2Wn8SZtug76fHnjJQWZ3tMK7x4TiMf",
+		FoundationAddress4:  "Efz2odsd1ydTKPVEwM2nyCSXdDnQr6JLeR",
+		FoundationAddress5:  "Ef3vywpTQcZR9LbFbquTE7QFDQqbSahBMR",
+		FoundationAddress6:  "ENgVAKFNRvTuq5mjSeqFwvKGZFsNz2kHsz",
+		FoundationAddress7:  "EHnhzh7754u8zLtKbj89bF6Px7RvfqycJV",
+		FoundationAddress8:  "EMuJFbZfg8ASyUMXumMgXRYHnBeNiAX5Hs",
+		FoundationAddress9:  "EXhhAdBrtCSTD2B3jAT71vigg5FoAn6Ymy",
+		FoundationAddress10: "EYA9k7gSduNncYxpFbfChVFrEWHoXG1EWA",
+		FoundationAddress11: "EStnMUGY1ECAkvKJQT5AN6rsZoCHXXaYwx",
 	}
 	regNet = &ChainParams{
-		Name:               "RegNet",
-		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
-		PowLimitBits:       0x207fffff,
-		TargetTimePerBlock: time.Second * 1,
-		TargetTimespan:     time.Second * 1 * 10,
-		AdjustmentFactor:   int64(4),
-		MaxOrphanBlocks:    10000,
-		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain/RegNet",
+		Name:                "RegNet",
+		PowLimit:            new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
+		PowLimitBits:        0x207fffff,
+		TargetTimePerBlock:  time.Second * 1,
+		TargetTimespan:      time.Second * 1 * 10,
+		AdjustmentFactor:    int64(4),
+		MaxOrphanBlocks:     10000,
+		MinMemoryNodes:      20160,
+		CoinbaseLockTime:    100,
+		ChainStorePath:      "Chain/RegNet",
+		FoundationAddress1:  "ESecJviepcBa2XtVj3nuetu2JDCKCvynBY",
+		FoundationAddress2:  "EbMkgA5QLUADNuAzxTBdte1coctPkR8ffv",
+		FoundationAddress3:  "EP1k2Wn8SZtug76fHnjJQWZ3tMK7x4TiMf",
+		FoundationAddress4:  "Efz2odsd1ydTKPVEwM2nyCSXdDnQr6JLeR",
+		FoundationAddress5:  "Ef3vywpTQcZR9LbFbquTE7QFDQqbSahBMR",
+		FoundationAddress6:  "ENgVAKFNRvTuq5mjSeqFwvKGZFsNz2kHsz",
+		FoundationAddress7:  "EHnhzh7754u8zLtKbj89bF6Px7RvfqycJV",
+		FoundationAddress8:  "EMuJFbZfg8ASyUMXumMgXRYHnBeNiAX5Hs",
+		FoundationAddress9:  "EXhhAdBrtCSTD2B3jAT71vigg5FoAn6Ymy",
+		FoundationAddress10: "EYA9k7gSduNncYxpFbfChVFrEWHoXG1EWA",
+		FoundationAddress11: "EStnMUGY1ECAkvKJQT5AN6rsZoCHXXaYwx",
 	}
 )
 
@@ -116,6 +149,18 @@ type ChainParams struct {
 	MinMemoryNodes     uint32
 	CoinbaseLockTime   uint32
 	ChainStorePath     string
+
+	FoundationAddress1  string //20%
+	FoundationAddress2  string //35%
+	FoundationAddress3  string //17%
+	FoundationAddress4  string //4.5%
+	FoundationAddress5  string //4.5%
+	FoundationAddress6  string //1%
+	FoundationAddress7  string //2%
+	FoundationAddress8  string //3%
+	FoundationAddress9  string //5%
+	FoundationAddress10 string //5%
+	FoundationAddress11 string //3% reward
 }
 
 type configParams struct {
