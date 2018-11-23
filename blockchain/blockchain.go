@@ -109,8 +109,8 @@ func GetGenesisBlock() (*Block, error) {
 		Version:    BlockVersion,
 		Previous:   EmptyHash,
 		MerkleRoot: EmptyHash,
-		Timestamp:  uint32(time.Unix(time.Date(2017, time.December, 22, 10, 0, 0, 0, time.UTC).Unix(), 0).Unix()),
-		Bits:       0x1d03ffff,
+		Timestamp:  uint32(time.Unix(time.Date(2018, time.November, 22, 05, 0, 0, 0, time.UTC).Unix(), 0).Unix()),
+		Bits:       0x1e00f8ff,
 		Nonce:      GenesisNonce,
 		Height:     uint32(0),
 	}

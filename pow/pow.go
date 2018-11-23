@@ -79,8 +79,13 @@ func (pow *PowService) CreateCoinbaseTx(nextBlockHeight uint32, minerAddr string
 		return nil, err
 	}
 
+	minerInfo := config.Parameters.PowConfiguration.MinerInfo
+	if minerInfo == "" {
+		minerInfo = config.Parameters.PowConfiguration.PayToAddr
+	}
+
 	pd := &PayloadCoinBase{
-		CoinbaseData: []byte(config.Parameters.PowConfiguration.MinerInfo),
+		CoinbaseData: []byte(minerInfo),
 	}
 
 	txn := NewCoinBaseTransaction(pd, DefaultLedger.Blockchain.GetBestHeight()+1)
