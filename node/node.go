@@ -68,12 +68,10 @@ type node struct {
 	 */
 	syncFlag           uint8
 	flagLock           sync.RWMutex
-	cachelock          sync.RWMutex
 	requestedBlockLock sync.RWMutex
 	ConnectingNodes
 	KnownAddressList
 	DefaultMaxPeers    uint
-	headerFirstMode    bool
 	RequestedBlockList map[Uint256]time.Time
 	syncTimer          *syncTimer
 	SyncBlkReqSem      Semaphore
@@ -129,7 +127,7 @@ func NewNode(conn net.Conn, inbound bool) *node {
 	}
 
 	n.handler = NewHandlerBase(&n)
-	n.start()
+	n.start(inbound)
 
 	return &n
 }
@@ -291,7 +289,6 @@ func (node *node) WaitForSyncFinish() {
 		addresses, heights := node.GetInternalNeighborAddressAndHeights()
 		log.Debug("others height is (internal only) ", heights)
 		log.Debug("others address is (internal only) ", addresses)
-
 
 		if CompareHeight(uint64(chain.DefaultLedger.Blockchain.BlockHeight), heights) > 0 {
 			LocalNode.SetSyncHeaders(false)
