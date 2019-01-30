@@ -14,7 +14,7 @@ func getBtcCoinbase(msgBlockHash Uint256) *BtcTx {
 	var merkleSize int32     // 4 byte
 	var merkleNonce int32    // 4 byte
 
-	magic = [4]byte{0xfa, 0xbe, 'm', 'n'}
+	magic = [4]byte{0xfa, 0xbe, 'm', 'm'}
 	auxBlockHash = msgBlockHash
 	merkleSize = 1
 	merkleNonce = 0
