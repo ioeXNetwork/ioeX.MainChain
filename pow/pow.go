@@ -185,9 +185,10 @@ func (pow *PowService) GenerateBlock(minerAddr string) (*Block, error) {
 	}
 
 	blockReward := MinerRewardAmountPerBlock
-	totalReward := totalTxFee + blockReward
+	//totalReward := totalTxFee + blockReward
+	totalReward := blockReward
 
-	msgBlock.Transactions[0].Outputs[0].Value = FoundationRewardAmountPerBlock
+	msgBlock.Transactions[0].Outputs[0].Value = FoundationRewardAmountPerBlock + totalTxFee
 	msgBlock.Transactions[0].Outputs[1].Value = totalReward
 
 	txHash := make([]common.Uint256, 0, len(msgBlock.Transactions))
