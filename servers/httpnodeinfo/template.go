@@ -39,7 +39,7 @@ const page = `
 </td>
 <td width="80%">
 	<table class="font" width="100%">
-	<tr><td colspan="1" width="25%">NodeID:</td><td width="25%">{{.NodeId}}</td></tr>
+	<tr><td colspan="1" width="25%">NodeID:</td><td width="25%">{{.NodeID}}</td></tr>
 	<tr><td width="25%">NodePort:</td><td width="25%">{{.NodePort}}</td></tr>
 	<tr><td width="25%">HttpRestPort:</td><td width="25%">{{.HttpRestPort}}</td><td width="25%">HttpWsPort:</td><td width="25%">{{.HttpWsPort}}</td></tr>
 	<tr><td width="25%">HttpJsonPort:</td><td width="25%">{{.HttpJsonPort}}</td></tr>
@@ -64,9 +64,9 @@ const page = `
 </td>
 <td width="80%">
 	<table class="font" width="100%">
-	<tr><th>Neighbor IP</th><th>Neighbor Id</th></tr>
+	<tr><th>Neighbor IP</th><th>Neighbor ID</th></tr>
 	{{range .Neighbors}}
-	<tr><td align="center">{{.NbrAddr}}</td><td align="center"><a href="http://{{.NbrAddr}}/info" style="cursor:hand">{{.NgbId}}</a></td></tr>
+	<tr><td align="center">{{.NbrAddr}}</td><td align="center"><a href="http://{{.NbrAddr}}/info" style="cursor:hand">{{.NgbID}}</a></td></tr>
 	{{end}}
 	</table>
 </td>
@@ -76,9 +76,9 @@ const page = `
 
 <table class="font" border="0" width="80%">
 	<tr>
-	<td width="26%" align="left"><a href="https://www.elastos.org/blog/" class="site">forum : https://www.elastos.org/blog</a><br></td>
-	<td width="26%" align="center"><a href="https://www.elastos.org" class="site">site : https://www.elastos.org</a></td>
-	<td width="28%" align="right"><a href="https://www.elastos.org/documents" class="site">doc : https://www.elastos.org/documents</a></td>
+	<td width="26%" align="left"><a href="https://www.ioex.co/blog/" class="site">forum : https://www.ioex.co/blog</a><br></td>
+	<td width="26%" align="center"><a href="https://www.ioex.co" class="site">site : https://www.ioex.co</a></td>
+	<td width="28%" align="right"><a href="https://www.ioex.co/documents" class="site">doc : https://www.ioex.co/documents</a></td>
 	</tr>
 </table>
 <br><br><br><br>

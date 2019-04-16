@@ -69,10 +69,10 @@ func CalcNextRequiredDifficulty(prevNode *BlockNode, newBlockTime time.Time) (ui
 	// intentionally converting the bits back to a number instead of using
 	// newTarget since conversion to the compact representation loses precision.
 	newTargetBits := BigToCompact(newTarget)
-	log.Tracef("Difficulty retarget at block height %d", prevNode.Height+1)
-	log.Tracef("Old target %08x (%064x)", prevNode.Bits, oldTarget)
-	log.Tracef("New target %08x (%064x)", newTargetBits, CompactToBig(newTargetBits))
-	log.Tracef("Actual timespan %v, adjusted timespan %v, target timespan %v",
+	log.Debugf("Difficulty retarget at block height %d", prevNode.Height+1)
+	log.Debugf("Old target %08x (%064x)", prevNode.Bits, oldTarget)
+	log.Debugf("New target %08x (%064x)", newTargetBits, CompactToBig(newTargetBits))
+	log.Debugf("Actual timespan %v, adjusted timespan %v, target timespan %v",
 		time.Duration(actualTimespan)*time.Second,
 		time.Duration(adjustedTimespan)*time.Second,
 		config.Parameters.ChainParam.TargetTimespan)
@@ -136,9 +136,6 @@ func CompactToBig(compact uint32) *big.Int {
 	isNegative := compact&0x00800000 != 0
 	exponent := uint(compact >> 24)
 
-	log.Tracef("mantissa %x", mantissa)
-	log.Tracef("exponent %d", exponent)
-
 	// Since the base for the exponent is 256, the exponent can be treated
 	// as the number of bytes to represent the full 256-bit number.  So,
 	// treat the exponent as the number of bytes and shift the mantissa
@@ -163,7 +160,11 @@ func CompactToBig(compact uint32) *big.Int {
 
 func CalcCurrentDifficulty(currentBits uint32) string {
 	var genesisBlockBits = config.Parameters.ChainParam.PowLimitBits
-	targetGenesisBlockBig := CompactToBig(genesisBlockBits)
-	targetCurrentBig := CompactToBig(currentBits)
-	return new(big.Int).Div(targetGenesisBlockBig, targetCurrentBig).String()
+	//targetGenesisBlockBig := CompactToBig(genesisBlockBits)
+	//targetCurrentBig := CompactToBig(currentBits)
+	targetGenesisBlockBig := new(big.Float).SetInt(CompactToBig(genesisBlockBits))
+	targetCurrentBig := new(big.Float).SetInt(CompactToBig(currentBits))
+
+	//return new(big.Int).Div(targetGenesisBlockBig, targetCurrentBig).String()
+	return new(big.Float).Quo(targetGenesisBlockBig, targetCurrentBig).String()
 }

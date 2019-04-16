@@ -1,8 +1,8 @@
-# The Node API Of IOEX Wallet
+# The Node API Of Elastos
 
-`IOEX Node` 使用 `2*334` 埠提供如下介面服務：
+`ELA Node` 使用 `2*334` 端口提供如下接口服务：
 
-* `/api/v1/node/connectioncount` : 獲取當前節點所連接到的節點數量
+* `/api/v1/node/connectioncount` : 获取当前节点所连接到的节点数量
 
    示例：
 
@@ -15,7 +15,7 @@
     }
     ```
 
-* `/api/v1/node/state` : 獲取當前節點狀態
+* `/api/v1/node/state` : 获取当前节点状态
 
    示例：
 
@@ -63,7 +63,7 @@
     }
     ```
 
-* `/api/v1/block/height` : 獲取節點區塊總高度
+* `/api/v1/block/height` : 获取节点区块高度
 
    示例：
 
@@ -76,7 +76,7 @@
     }
     ```
 
-* `/api/v1/transactionpool` : 獲取節點交易池資料
+* `/api/v1/transactionpool` : 获取节点交易池数据
 
     示例：
 
@@ -128,9 +128,9 @@
     }
     ```
 
-* `/api/v1/restart` : 重新開機節點restful服務
+* `/api/v1/restart` : 重新启动节点restful服务
 
-* `/api/v1/block/hash/<height>` : 根據區塊 `height` 獲取區塊 `hash`
+* `/api/v1/block/hash/<height>` : 根据区块 `height` 获取区块 `hash`
 
     示例：
 
@@ -143,7 +143,7 @@
     }
     ```
 
-* `/api/v1/block/details/height/<height>` : 根據區塊 `height` 獲取區塊詳細資訊
+* `/api/v1/block/details/height/<height>` : 根据区块 `height` 获取区块详细信息
 
     示例：
 
@@ -194,7 +194,7 @@
                 "type": 0,
                 "payloadversion": 4,
                 "payload": {
-                    "CoinbaseData": "IOEX"
+                    "CoinbaseData": "ELA"
                 },
                 "attributes": [{
                     "usage": 0,
@@ -215,7 +215,7 @@
     }
     ```
 
-* `/api/v1/block/details/hash/<hash>` : 根據區塊 `hash` 獲取區塊詳細資訊
+* `/api/v1/block/details/hash/<hash>` : 根据区块 `hash` 获取区块详细信息
 
     示例：
 
@@ -248,7 +248,7 @@
     }
     ```
 
-* `/api/v1/block/transactions/height/<height>` : 根據區塊 `height` 獲取區塊所有交易 `hash`
+* `/api/v1/block/transactions/height/<height>` : 根据区块 `height` 获取区块所有交易 `hash`
 
    示例：
 
@@ -264,8 +264,8 @@
         }
     }
     ```
-    
-* `/api/v1/transaction/<hash>` : 根據交易 `hash` 獲取區塊所有交易資訊
+
+* `/api/v1/transaction/<hash>` : 根据交易 `hash` 获取区块所有交易信息
 
     示例：
 
@@ -306,7 +306,7 @@
             "type": 0,
             "payloadversion": 4,
             "payload": {
-                "CoinbaseData": "IOEX"
+                "CoinbaseData": "ELA"
             },
             "attributes": [{
                 "usage": 0,
@@ -317,7 +317,7 @@
     }
     ```
 
-* `/api/v1/asset/balances/<addr>` : 根據錢包位址獲取錢包餘額
+* `/api/v1/asset/balances/<addr>` : 根据钱包地址获取钱包余额
 
     示例：
 
@@ -330,7 +330,7 @@
     }
     ```
 
-* `/api/v1/asset/<hash>` : 資產查詢
+* `/api/v1/asset/<hash>` : 资产查询
 
     示例：
 
@@ -340,7 +340,7 @@
         "Desc": "Success",
         "Error": 0,
         "Result": {
-            "Name": "IOEX",
+            "Name": "ELA",
             "Description": "",
             "Precision": 8,
             "AssetType": 0,
@@ -349,7 +349,7 @@
     }
     ```
 
-* `/api/v1/asset/utxos/<addr>` : 獲取一個位址所有 `UTXO`
+* `/api/v1/asset/utxos/<addr>` : 获取一个地址所有 `UTXO`
 
     示例：
 
@@ -360,7 +360,7 @@
         "Error": 0,
         "Result": [{
             "AssetId": "a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0",
-            "AssetName": "IOEX",
+            "AssetName": "ELA",
             "Utxo": [{
                 "Txid": "c8d4dc984da78c878b9dab752c077b41a98f6e67e5ee6b04cc3d45cb4f42b81b",
                 "Index": 1,
@@ -374,7 +374,7 @@
     }
     ```
 
-* `/api/v1/asset/balance/<addr>/<assetid>` : 根據地址和AssetID查詢餘額
+* `/api/v1/asset/balance/<addr>/<assetid>` : 根据地址和AssetID查询余额
 
     示例：
 
@@ -387,7 +387,7 @@
     }
     ```
 
-* `/api/v1/asset/utxo/<addr>/<assetid>` : 根據地址和AssetID查詢UTXO
+* `/api/v1/asset/utxo/<addr>/<assetid>` : 根据地址和AssetID查询UTXO
 
     示例：
 
@@ -408,7 +408,7 @@
     }
     ```
 
-* `/api/v1/transaction` : 將簽名後的交易資料廣播至節點
+* `/api/v1/transaction` : 将签名后的交易数据广播至节点
 
     示例：
 
@@ -420,3 +420,19 @@
         "Result": "2e8d51bdbba82af7a7ed334cb0fb60ad9a5da7e5170f9d2509023f3ed3cce1d0"
     }
     ```
+
+    这个接口里面data参数值(签名后的交易数据)的生成可以使用两种方法：
+
+    1. 使用 [Elastos.ELA.Client](https://github.com/elastos/Elastos.ELA.Client) 命令行工具，示例如下
+    ```bash
+    ./ela-cli wallet -t create --from EdAEC51BmmzJFHUdMJ6bR5fZB4oo919E8n --amount 10 --fee 0.001 --to EZmpNht7UAHtpqVBMDfPRDtQCmAY6eYjgV
+    ```
+
+    请使用实际的ELA Address替换示例中的 --from 和 --to 的参数值
+    ```bash
+    ./ela-cli wallet -t sign --file to_be_signed.txn
+    ```
+
+    这里需要输入你本地钱包的密码，这个命令返回的一长串十六进制的字符就是签名后的交易数据
+
+    2. 使用 [Elastos.ELA.Utilities.Java](https://github.com/elastos/Elastos.ELA.Utilities.Java) 工具库提供的相关工具生成，具体参考仓库的文档

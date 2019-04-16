@@ -1,10 +1,10 @@
-# The Node API Of IOEX Wallet
+# The RESTFUL API Of Elastos Node
 
-`IOEX Node` 使用 `2*334` 埠提供如下介面服務：
+`ELA Node` uses the `2*334` port to provide the following interface services:
 
-* `/api/v1/node/connectioncount` : 獲取當前節點所連接到的節點數量
+* `/api/v1/node/connectioncount` : Returns the number of nodes to which the node is connected
 
-   示例：
+   Example:
 
     ```bash
     curl http://localhost:20334/api/v1/node/connectioncount
@@ -15,9 +15,9 @@
     }
     ```
 
-* `/api/v1/node/state` : 獲取當前節點狀態
+* `/api/v1/node/state` : Returns status of the node
 
-   示例：
+   Example:
 
     ```bash
     curl http://localhost:20334/api/v1/node/state
@@ -63,9 +63,9 @@
     }
     ```
 
-* `/api/v1/block/height` : 獲取節點區塊總高度
+* `/api/v1/block/height` : Returns the block height of the node
 
-   示例：
+   Example:
 
     ```bash
     curl http://localhost:20334/api/v1/block/height
@@ -76,9 +76,9 @@
     }
     ```
 
-* `/api/v1/transactionpool` : 獲取節點交易池資料
+* `/api/v1/transactionpool` : Returns various information about the TX mempool
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/transactionpool
@@ -128,11 +128,11 @@
     }
     ```
 
-* `/api/v1/restart` : 重新開機節點restful服務
+* `/api/v1/restart` : Restart the restful service
 
-* `/api/v1/block/hash/<height>` : 根據區塊 `height` 獲取區塊 `hash`
+* `/api/v1/block/hash/<height>` : Returns the block `hash` about the given block `height`
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/block/hash/123
@@ -143,9 +143,9 @@
     }
     ```
 
-* `/api/v1/block/details/height/<height>` : 根據區塊 `height` 獲取區塊詳細資訊
+* `/api/v1/block/details/height/<height>` : Returns information about the given block `height`
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/block/details/height/123
@@ -194,7 +194,7 @@
                 "type": 0,
                 "payloadversion": 4,
                 "payload": {
-                    "CoinbaseData": "IOEX"
+                    "CoinbaseData": "ELA"
                 },
                 "attributes": [{
                     "usage": 0,
@@ -215,9 +215,9 @@
     }
     ```
 
-* `/api/v1/block/details/hash/<hash>` : 根據區塊 `hash` 獲取區塊詳細資訊
+* `/api/v1/block/details/hash/<hash>` : Returns information about the given block `hash`
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/block/details/hash/b9450e180aba1a96a93003be1ba775499577f856bb17a82177e74ae4d94db3fb
@@ -248,9 +248,9 @@
     }
     ```
 
-* `/api/v1/block/transactions/height/<height>` : 根據區塊 `height` 獲取區塊所有交易 `hash`
+* `/api/v1/block/transactions/height/<height>` : Returns all `hash`es of the transactions in the block according to the block `height`
 
-   示例：
+   Example:
 
     ```bash
     curl http://localhost:20334/api/v1/block/transactions/height/16000
@@ -264,10 +264,10 @@
         }
     }
     ```
-    
-* `/api/v1/transaction/<hash>` : 根據交易 `hash` 獲取區塊所有交易資訊
 
-    示例：
+* `/api/v1/transaction/<hash>` : Returns information about the given transaction `hash`
+
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/transaction/5c0a30ad3764e6524803ac673d552af59acac910cea36f1678d5b0ae03c67078
@@ -306,7 +306,7 @@
             "type": 0,
             "payloadversion": 4,
             "payload": {
-                "CoinbaseData": "IOEX"
+                "CoinbaseData": "ELA"
             },
             "attributes": [{
                 "usage": 0,
@@ -317,9 +317,9 @@
     }
     ```
 
-* `/api/v1/asset/balances/<addr>` : 根據錢包位址獲取錢包餘額
+* `/api/v1/asset/balances/<addr>` : Returns the balance of the address
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/asset/balances/EgHPRhodCsDKuDBPApCK3KLayiBomrJrbH
@@ -330,9 +330,9 @@
     }
     ```
 
-* `/api/v1/asset/<hash>` : 資產查詢
+* `/api/v1/asset/<hash>` : Returns information about the given asset `hash`
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/asset/a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0
@@ -340,7 +340,7 @@
         "Desc": "Success",
         "Error": 0,
         "Result": {
-            "Name": "IOEX",
+            "Name": "ELA",
             "Description": "",
             "Precision": 8,
             "AssetType": 0,
@@ -349,9 +349,9 @@
     }
     ```
 
-* `/api/v1/asset/utxos/<addr>` : 獲取一個位址所有 `UTXO`
+* `/api/v1/asset/utxos/<addr>` : Returns the `UTXO`s according to the given address
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/asset/utxos/EgHPRhodCsDKuDBPApCK3KLayiBomrJrbH
@@ -360,7 +360,7 @@
         "Error": 0,
         "Result": [{
             "AssetId": "a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0",
-            "AssetName": "IOEX",
+            "AssetName": "ELA",
             "Utxo": [{
                 "Txid": "c8d4dc984da78c878b9dab752c077b41a98f6e67e5ee6b04cc3d45cb4f42b81b",
                 "Index": 1,
@@ -374,9 +374,9 @@
     }
     ```
 
-* `/api/v1/asset/balance/<addr>/<assetid>` : 根據地址和AssetID查詢餘額
+* `/api/v1/asset/balance/<addr>/<assetid>` : Returns the balance about the given address and AssetID
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/asset/balance/EgHPRhodCsDKuDBPApCK3KLayiBomrJrbH/a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0
@@ -387,9 +387,9 @@
     }
     ```
 
-* `/api/v1/asset/utxo/<addr>/<assetid>` : 根據地址和AssetID查詢UTXO
+* `/api/v1/asset/utxo/<addr>/<assetid>` : Returns the UTXO(s) according to the given address and AssetID
 
-    示例：
+    Example:
 
     ```bash
     curl http://localhost:20334/api/v1/asset/utxo/EgHPRhodCsDKuDBPApCK3KLayiBomrJrbH/a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0
@@ -408,9 +408,9 @@
     }
     ```
 
-* `/api/v1/transaction` : 將簽名後的交易資料廣播至節點
+* `/api/v1/transaction` : Broadcasts the transaction data to the node
 
-    示例：
+    Example:
 
     ```bash
     curl -X POST http://localhost:21334/api/v1/transaction -H "Content-Type: application/json" -d '{"Action": "sendrawtransaction", "data": "020001001335353737303036373931393437373739343130010faf7e6f2f43ebdc2723e50014280d4cdac1975f9f883dc57e60aa7e96047b5401000000000002b037db964a231458d2d6ffd5ea18944c4f90e63d547c5d3b9874df66a4ead0a300e1f505000000000000000021132c86ebad33299ecc15dff410d4b0a76b4f9e17b037db964a231458d2d6ffd5ea18944c4f90e63d547c5d3b9874df66a4ead0a3a02bb459e4050000000000002136c6f2ad6785cef94fab1216b776add14bd756a850ab0100014140cbd0fb92a390dcd802ecef745091045ccb3033f097e6a42cc18822b000360e48d1a09388db077ca9c7cfc889c0eca427ca1f5f05490658a854f752ea1fb57b7c2321032f4540e915134f38ba24cdc08621ad7f5b8b62db36843ae8fa9422c047a04be8ac"}'
@@ -420,3 +420,19 @@
         "Result": "2e8d51bdbba82af7a7ed334cb0fb60ad9a5da7e5170f9d2509023f3ed3cce1d0"
     }
     ```
+
+    The generation of the data parameter value (the signed transaction data) in this interface can be done in two ways:
+
+    1. Use the [Elastos.ELA.Client](https://github.com/elastos/Elastos.ELA.Client) command line tool, examples are as follows
+    ```bash
+    ./ela-cli wallet -t create --from EdAEC51BmmzJFHUdMJ6bR5fZB4oo919E8n --amount 10 --fee 0.001 --to EZmpNht7UAHtpqVBMDfPRDtQCmAY6eYjgV
+    ```
+
+    Please replace the parameter values of `--from` and `--to` in the example with the actual ELA Address.
+    ```bash
+    ./ela-cli wallet -t sign --file to_be_signed.txn
+    ```
+
+    Here you need to enter the password of your local wallet. The long string of hexadecimal characters returned by this command is the signed transaction data.
+
+    2. Use the relevant tools provided by the [Elastos.ELA.Utilities.Java](https://github.com/elastos/Elastos.ELA.Utilities.Java) tool library to generate specific reference to the documentation of the repository.

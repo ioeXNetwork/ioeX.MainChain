@@ -32,7 +32,7 @@ type ProgramInfo struct {
 }
 
 type TransactionInfo struct {
-	TxId           string          `json:"txid"`
+	TxID          string       `json:"txid"`
 	Hash           string          `json:"hash"`
 	Size           uint32          `json:"size"`
 	VSize          uint32          `json:"vsize"`
@@ -71,6 +71,7 @@ type BlockInfo struct {
 	PreviousBlockHash string        `json:"previousblockhash"`
 	NextBlockHash     string        `json:"nextblockhash"`
 	AuxPow            string        `json:"auxpow"`
+	MinerInfo         string        `json:"minerinfo"`
 }
 
 type NodeState struct {
@@ -140,8 +141,8 @@ type WithdrawFromSideChainInfo struct {
 }
 
 type UTXOInfo struct {
-	AssetId       string `json:"assetid"`
-	Txid          string `json:"txid"`
+	AssetID       string `json:"assetid"`
+	TxID          string `json:"txid"`
 	VOut          uint32 `json:"vout"`
 	Address       string `json:"address"`
 	Amount        string `json:"amount"`
