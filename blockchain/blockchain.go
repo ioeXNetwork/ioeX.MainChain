@@ -109,7 +109,7 @@ func GetGenesisBlock() (*Block, error) {
 		Version:    BlockVersion,
 		Previous:   EmptyHash,
 		MerkleRoot: EmptyHash,
-		Timestamp:  uint32(time.Unix(time.Date(2018, time.November, 22, 05, 0, 0, 0, time.UTC).Unix(), 0).Unix()),
+		Timestamp:  uint32(time.Unix(time.Date(2019, time.March, 11, 8, 0, 0, 0, time.UTC).Unix(), 0).Unix()),
 		Bits:       0x1e00f8ff,
 		Nonce:      GenesisNonce,
 		Height:     uint32(0),
@@ -138,52 +138,52 @@ func GetGenesisBlock() (*Block, error) {
 	coinBase.Outputs = []*Output{
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 20 / 100, //20%
+			Value:       20000 * 10000 * 100000000 * 5 / 100, //5% 天使輪
 			ProgramHash: FoundationAddress1,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 35 / 100, //35%
+			Value:       20000 * 10000 * 100000000 * 5 / 100, //5% 策略夥伴輪
 			ProgramHash: FoundationAddress2,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 17 / 100, //17%
+			Value:       20000 * 10000 * 100000000 * 20 / 100, //20% 私募 + 預售輪
 			ProgramHash: FoundationAddress3,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 45 / 1000, //4.5%
+			Value:       20000 * 10000 * 100000000 * 35 / 100, //35% 節點獎勵
 			ProgramHash: FoundationAddress4,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 45 / 1000, //4.5%
+			Value:       20000 * 10000 * 100000000 * 2 / 100, //2% 推廣宣傳
 			ProgramHash: FoundationAddress5,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 1 / 100, //1%
+			Value:       20000 * 10000 * 100000000 * 4 / 100, //4% 團隊A
 			ProgramHash: FoundationAddress6,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 2 / 100, //2%
+			Value:       20000 * 10000 * 100000000 * 2 / 100, //2% 團隊B
 			ProgramHash: FoundationAddress7,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 3 / 100, //3%
+			Value:       20000 * 10000 * 100000000 * 17 / 100, //17% 基金會
 			ProgramHash: FoundationAddress8,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 5 / 100, //5%
+			Value:       20000 * 10000 * 100000000 * 3 / 100, //3% 顧問
 			ProgramHash: FoundationAddress9,
 		},
 		{
 			AssetID:     ioeXCoin.Hash(),
-			Value:       20000 * 10000 * 100000000 * 5 / 100, //5%
+			Value:       20000 * 10000 * 100000000 * 4 / 100, //4% 團隊C
 			ProgramHash: FoundationAddress10,
 		},
 	}
