@@ -34,6 +34,9 @@ const (
 	Api_SendRawTransaction  = "/api/v1/transaction"
 	Api_GetTransactionPool  = "/api/v1/transactionpool"
 	Api_Restart             = "/api/v1/restart"
+	Api_GettransactionV2     = "/api/v2/transaction/:hash"
+	Api_GetUnlockUTXObyAsset = "/api/v2/asset/unlockutxo/:addr/:assetid"
+	Api_GetUnlockUTXObyAddr  = "/api/v2/asset/unlockutxos/:addr"
 )
 
 type Action struct {
@@ -113,6 +116,10 @@ func (rt *restServer) initializeMethod() {
 		Api_GetBalanceByAddr:    {name: "getbalancebyaddr", handler: servers.GetBalanceByAddr},
 		Api_GetBalancebyAsset:   {name: "getbalancebyasset", handler: servers.GetBalanceByAsset},
 		Api_Restart:             {name: "restart", handler: rt.Restart},
+		//
+		Api_GettransactionV2:     {name: "gettransactionv2", handler: servers.GetTransactionByHashV2},
+		Api_GetUnlockUTXObyAddr:  {name: "getunlockutxobyaddr", handler: servers.GetUnlockUnspends},
+		Api_GetUnlockUTXObyAsset: {name: "getunlockutxobyasset", handler: servers.GetUnlockUnspendOutput},
 	}
 
 	postMethodMap := map[string]Action{
@@ -134,6 +141,8 @@ func (rt *restServer) getPath(url string) string {
 		return Api_Getblockhash
 	} else if strings.Contains(url, strings.TrimRight(Api_Gettransaction, ":hash")) {
 		return Api_Gettransaction
+	} else if strings.Contains(url, strings.TrimRight(Api_GettransactionV2, ":hash")) {
+		return Api_GettransactionV2
 	} else if strings.Contains(url, strings.TrimRight(Api_GetBalanceByAddr, ":addr")) {
 		return Api_GetBalanceByAddr
 	} else if strings.Contains(url, strings.TrimRight(Api_GetBalancebyAsset, ":addr/:assetid")) {
@@ -142,6 +151,10 @@ func (rt *restServer) getPath(url string) string {
 		return Api_GetUTXObyAddr
 	} else if strings.Contains(url, strings.TrimRight(Api_GetUTXObyAsset, ":addr/:assetid")) {
 		return Api_GetUTXObyAsset
+	} else if strings.Contains(url, strings.TrimRight(Api_GetUnlockUTXObyAddr, ":addr")) {
+		return Api_GetUnlockUTXObyAddr
+	} else if strings.Contains(url, strings.TrimRight(Api_GetUnlockUTXObyAsset, ":addr/:assetid")) {
+		return Api_GetUnlockUTXObyAsset
 	} else if strings.Contains(url, strings.TrimRight(Api_Getasset, ":hash")) {
 		return Api_Getasset
 	}
@@ -173,6 +186,9 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 	case Api_Gettransaction:
 		req["hash"] = getParam(r, "hash")
 
+	case Api_GettransactionV2:
+		req["hash"] = getParam(r, "hash")
+
 	case Api_Getasset:
 		req["hash"] = getParam(r, "hash")
 
@@ -187,6 +203,13 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 		req["addr"] = getParam(r, "addr")
 
 	case Api_GetUTXObyAsset:
+		req["addr"] = getParam(r, "addr")
+		req["assetid"] = getParam(r, "assetid")
+
+	case Api_GetUnlockUTXObyAddr:
+		req["addr"] = getParam(r, "addr")
+
+	case Api_GetUnlockUTXObyAsset:
 		req["addr"] = getParam(r, "addr")
 		req["assetid"] = getParam(r, "assetid")
 

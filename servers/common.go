@@ -18,6 +18,14 @@ type InputInfo struct {
 	Sequence uint32 `json:"sequence"`
 }
 
+type InputInfoV2 struct {
+	TxID     string `json:"txid"`
+	VOut     uint16 `json:"vout"`
+	Sequence uint32 `json:"sequence"`
+	Address  string `json:"address"`
+	Value      string `json:"value"`
+}
+
 type OutputInfo struct {
 	Value      string `json:"value"`
 	Index      uint32 `json:"n"`
@@ -49,6 +57,28 @@ type TransactionInfo struct {
 	Payload        PayloadInfo     `json:"payload"`
 	Attributes     []AttributeInfo `json:"attributes"`
 	Programs       []ProgramInfo   `json:"programs"`
+	TxFee          uint32          `json:"txFee"`
+}
+
+type TransactionInfoV2 struct {
+	TxID           string          `json:"txid"`
+	Hash           string          `json:"hash"`
+	Size           uint32          `json:"size"`
+	VSize          uint32          `json:"vsize"`
+	Version        uint32          `json:"version"`
+	LockTime       uint32          `json:"locktime"`
+	Inputs         []InputInfoV2   `json:"vin"`
+	Outputs        []OutputInfo    `json:"vout"`
+	BlockHash      string          `json:"blockhash"`
+	Confirmations  uint32          `json:"confirmations"`
+	Time           uint32          `json:"time"`
+	BlockTime      uint32          `json:"blocktime"`
+	TxType         TransactionType `json:"type"`
+	PayloadVersion byte            `json:"payloadversion"`
+	Payload        PayloadInfo     `json:"payload"`
+	Attributes     []AttributeInfo `json:"attributes"`
+	Programs       []ProgramInfo   `json:"programs"`
+	TxFee          uint32          `json:"txFee"`
 }
 
 type BlockInfo struct {

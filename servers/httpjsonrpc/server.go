@@ -45,6 +45,7 @@ func StartRPCServer() {
 	mainMux["getbestblockhash"] = GetBestBlockHash
 	mainMux["getblockcount"] = GetBlockCount
 	mainMux["getblockbyheight"] = GetBlockByHeight
+	mainMux["getblocksbyheight"] = GetBlocksByHeight
 	mainMux["getexistwithdrawtransactions"] = GetExistWithdrawTransactions
 	mainMux["listunspent"] = ListUnspent
 	mainMux["getreceivedbyaddress"] = GetReceivedByAddress

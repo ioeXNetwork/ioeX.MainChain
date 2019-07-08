@@ -423,12 +423,12 @@ func (c *ChainStore) GetTxReference(tx *Transaction) (map[*Input]*Output, error)
 		} else {
 			transaction, _, err := c.GetTransaction(txID)
 
-		if err != nil {
-			return nil, errors.New("GetTxReference failed, previous transaction not found")
-		}
-		if int(index) >= len(transaction.Outputs) {
-			return nil, errors.New("GetTxReference failed, refIdx out of range.")
-		}
+			if err != nil {
+				return nil, errors.New("GetTxReference failed, previous transaction not found")
+			}
+			if int(index) >= len(transaction.Outputs) {
+				return nil, errors.New("GetTxReference failed, refIdx out of range")
+			}
 			reference[input] = transaction.Outputs[index]
 			txOutputsCache[txID] = transaction.Outputs
 		}

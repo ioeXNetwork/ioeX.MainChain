@@ -342,13 +342,15 @@ func (node *node) Relay(from protocol.Noder, message interface{}) error {
 					inv := msg.NewInventory()
 					txID := message.Hash()
 					inv.AddInvVect(msg.NewInvVect(msg.InvTypeTx, &txID))
-					nbr.SendMessage(inv)
+					go nbr.SendMessage(inv)
 					continue
 				}
 
 				if nbr.IsRelay() {
-					nbr.SendMessage(msg.NewTx(message))
+					//log.Debug("IsRelay SendMessage")
+					go nbr.SendMessage(msg.NewTx(message))
 					node.txnCnt++
+					//log.Debugf("IsRelay %d", node.txnCnt)
 				}
 			case *Block:
 				log.Debug("Relay block message")
@@ -356,12 +358,12 @@ func (node *node) Relay(from protocol.Noder, message interface{}) error {
 					inv := msg.NewInventory()
 					blockHash := message.Hash()
 					inv.AddInvVect(msg.NewInvVect(msg.InvTypeBlock, &blockHash))
-					nbr.SendMessage(inv)
+					go nbr.SendMessage(inv)
 					continue
 				}
 
 				if nbr.IsRelay() {
-					nbr.SendMessage(msg.NewBlock(message))
+					go nbr.SendMessage(msg.NewBlock(message))
 				}
 			default:
 				log.Warn("unknown relay message type")

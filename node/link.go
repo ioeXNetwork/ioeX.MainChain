@@ -325,6 +325,7 @@ out:
 		case smsg := <-node.sendQueue:
 			err := p2p.WriteMessage(node.conn, node.magic, smsg)
 			if err != nil {
+				//log.Debugf("node.Disconnect err %d", err)
 				node.Disconnect()
 				continue
 			}

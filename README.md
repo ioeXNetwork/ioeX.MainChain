@@ -119,11 +119,11 @@ $ sudo apt-get install -y golang-1.9-go
 > If you install older version, such as v1.8, you may get missing math/bits package error when build.
 
 ### Setup basic workspace
-In this instruction we use ~/dev/src/github.com/ioeXNetwork/ as our working directory. If you clone the source code to a different directory, please make sure you change other environment variables accordingly (not recommended). 
+In this instruction we use ~/$GOPATH/src/github.com/ioeXNetwork/ as our working directory. If you clone the source code to a different directory, please make sure you change other environment variables accordingly (not recommended). 
 
 ```shell
-$ mkdir -p ~/dev/bin
-$ mkdir -p ~/dev/src/github.com/ioeXNetwork
+$ mkdir -p ~/$GOPATH/bin
+$ mkdir -p ~/$GOPATH/src/github.com/ioeXNetwork
 ```
 
 ### Set correct environment variables
@@ -180,6 +180,50 @@ If you did not see any error message, congratulations, you have made the ioeXNet
 
 - run `./ioex` to run the node program.
 
+## Build on Windows
+
+### Install Go distribution 1.9
+
+download Go v1.9 package
+install Go
+
+> If you install older version, such as v1.8, you may get missing math/bits package error when build.
+
+### Setup basic workspace
+In this instruction we use $GOPATH/src/github.com/ioeXNetwork/ as our working directory. If you clone the source code to a different directory, please make sure you change other environment variables accordingly (not recommended). 
+
+```shell
+$ mkdir -p $GOPATH/bin
+$ mkdir -p $GOPATH/src/github.com/ioeXNetwork
+```
+
+### Install Glide
+
+Glide is a package manager for Golang. We use Glide to install dependent packages.
+
+```shell
+$ go get github.com/Masterminds/glide
+```
+
+### Glide install
+
+cd $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain and Run `glide update && glide install` to install dependencies.
+
+### Clone source code to $GOPATH/src/github.com/ioeXNetwork folder
+Make sure you are in the folder of $GOPATH/src/github.com/ioeXNetwork
+
+```shell
+$ git clone http://github.com/ioeXNetwork/ioeX.MainChain.git
+```
+
+If clone works successfully, you should see folder structure like $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain
+
+### Make
+
+cd $GOPATH/src/github.com/ioeXNetwork/ioeX.MainChain and Run `go build -o ioex.exe main.go` to build files.
+
+If you did not see any error message, congratulations, you have made the ioeXNetwork full node.
+
 # Config the node
 
 See the [documentation](./docs/config.json.md) about config.json
@@ -191,6 +235,7 @@ Alternatively if don't want to build it manually. We also provide a `Dockerfile`
 ```bash
 cd docker
 docker build -t ioex_node_run .
+```
 
 #start container
 

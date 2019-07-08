@@ -242,7 +242,7 @@ func CheckTransactionOutput(version uint32, txn *Transaction) error {
 		}
 
 		if Fixed64(foundationReward) < FoundationRewardAmountPerBlock {
-			return errors.New("Reward to foundation in coinbase < 19")
+			return errors.New("Reward to foundation in coinbase < 20")
 		}
 
 		return nil
@@ -259,7 +259,7 @@ func CheckTransactionOutput(version uint32, txn *Transaction) error {
 
 		// output value must >= 0
 		if output.Value < Fixed64(0) {
-			return errors.New("Invalide transaction UTXO output.")
+			return errors.New("Invalide transaction UTXO output")
 		}
 		if version&CheckTxOut == CheckTxOut {
 			if !CheckOutputProgramHash(output.ProgramHash) {
