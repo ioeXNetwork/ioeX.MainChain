@@ -36,17 +36,101 @@ func init() {
 	}
 	log.Debug("The Core number is ", coreNum)
 
-	foundationAddress := config.Parameters.Configuration.FoundationAddress
-	if foundationAddress == "" {
-		foundationAddress = "8VYXVxKKSAxkmRrfmGpQR2Kc66XhG6m3ta"
-	}
-
+	foundationAddress := config.Parameters.ChainParam.FoundationAddress1
 	address, err := common.Uint168FromAddress(foundationAddress)
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(-1)
 	}
 	blockchain.FoundationAddress = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress1
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress1 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress2
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress2 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress3
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress3 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress4
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress4 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress5
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress5 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress6
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress6 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress7
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress7 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress8
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress8 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress9
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress9 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress10
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress10 = *address
+
+	foundationAddress = config.Parameters.ChainParam.FoundationAddress11
+	address, err = common.Uint168FromAddress(foundationAddress)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(-1)
+	}
+	blockchain.FoundationAddress11 = *address
 
 	runtime.GOMAXPROCS(coreNum)
 }

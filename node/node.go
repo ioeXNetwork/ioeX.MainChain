@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math/rand"
 	"net"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -69,12 +68,10 @@ type node struct {
 	 */
 	syncFlag           uint8
 	flagLock           sync.RWMutex
-	cachelock          sync.RWMutex
 	requestedBlockLock sync.RWMutex
 	ConnectingNodes
 	KnownAddressList
 	DefaultMaxPeers    uint
-	headerFirstMode    bool
 	RequestedBlockList map[Uint256]time.Time
 	syncTimer          *syncTimer
 	SyncBlkReqSem      Semaphore
@@ -112,9 +109,9 @@ func NewNode(conn net.Conn, inbound bool) *node {
 		conn.LocalAddr(), conn.RemoteAddr(), conn.RemoteAddr().Network())
 
 	addr := conn.RemoteAddr().String()
-	ip := addr
-	if i := strings.LastIndex(addr, ":"); i > 0 {
-		ip = addr[:i-1]
+	ip, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		log.Error("node init err:", err)
 	}
 	n := node{
 		link: link{
@@ -130,7 +127,7 @@ func NewNode(conn net.Conn, inbound bool) *node {
 	}
 
 	n.handler = NewHandlerBase(&n)
-	n.start()
+	n.start(inbound)
 
 	return &n
 }
@@ -289,8 +286,9 @@ func (node *node) WaitForSyncFinish() {
 		bc := chain.DefaultLedger.Blockchain
 		log.Info("[", len(bc.Index), len(bc.BlockCache), len(bc.Orphans), "]")
 
-		heights := node.GetNeighborHeights()
-		log.Debug("others height is ", heights)
+		addresses, heights := node.GetInternalNeighborAddressAndHeights()
+		log.Debug("others height is (internal only) ", heights)
+		log.Debug("others address is (internal only) ", addresses)
 
 		if CompareHeight(uint64(chain.DefaultLedger.Blockchain.BlockHeight), heights) > 0 {
 			LocalNode.SetSyncHeaders(false)
@@ -342,15 +340,17 @@ func (node *node) Relay(from protocol.Noder, message interface{}) error {
 				log.Debug("Relay transaction message")
 				if nbr.BloomFilter().IsLoaded() && nbr.BloomFilter().MatchTxAndUpdate(message) {
 					inv := msg.NewInventory()
-					txId := message.Hash()
-					inv.AddInvVect(msg.NewInvVect(msg.InvTypeTx, &txId))
-					nbr.SendMessage(inv)
+					txID := message.Hash()
+					inv.AddInvVect(msg.NewInvVect(msg.InvTypeTx, &txID))
+					go nbr.SendMessage(inv)
 					continue
 				}
 
 				if nbr.IsRelay() {
-					nbr.SendMessage(msg.NewTx(message))
+					//log.Debug("IsRelay SendMessage")
+					go nbr.SendMessage(msg.NewTx(message))
 					node.txnCnt++
+					//log.Debugf("IsRelay %d", node.txnCnt)
 				}
 			case *Block:
 				log.Debug("Relay block message")
@@ -358,12 +358,12 @@ func (node *node) Relay(from protocol.Noder, message interface{}) error {
 					inv := msg.NewInventory()
 					blockHash := message.Hash()
 					inv.AddInvVect(msg.NewInvVect(msg.InvTypeBlock, &blockHash))
-					nbr.SendMessage(inv)
+					go nbr.SendMessage(inv)
 					continue
 				}
 
 				if nbr.IsRelay() {
-					nbr.SendMessage(msg.NewBlock(message))
+					go nbr.SendMessage(msg.NewBlock(message))
 				}
 			default:
 				log.Warn("unknown relay message type")
@@ -396,8 +396,9 @@ func (node *node) SetSyncHeaders(b bool) {
 }
 
 func (node *node) needSync() bool {
-	heights := node.GetNeighborHeights()
-	log.Info("nbr height-->", heights, chain.DefaultLedger.Blockchain.BlockHeight)
+	addresses, heights := node.GetInternalNeighborAddressAndHeights()
+	log.Info("internal nbr height-->", heights, chain.DefaultLedger.Blockchain.BlockHeight)
+	log.Info("internal nbr address ", addresses)
 	return CompareHeight(uint64(chain.DefaultLedger.Blockchain.BlockHeight), heights) < 0
 }
 

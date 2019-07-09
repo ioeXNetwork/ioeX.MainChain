@@ -80,17 +80,16 @@ func PowCheckBlockSanity(block *Block, powLimit *big.Int, timeSource MedianTimeS
 		version += CheckTxOut
 	}
 
-	txIds := make([]Uint256, 0, len(transactions))
-	existingTxIds := make(map[Uint256]struct{})
+	txIDs := make([]Uint256, 0, len(transactions))
+	existingTxIDs := make(map[Uint256]struct{})
 	existingTxInputs := make(map[string]struct{})
-	existingSideTxs := make(map[Uint256]struct{})
 	for _, txn := range transactions {
-		txId := txn.Hash()
+		txID := txn.Hash()
 		// Check for duplicate transactions.
-		if _, exists := existingTxIds[txId]; exists {
+		if _, exists := existingTxIDs[txID]; exists {
 			return errors.New("[PowCheckBlockSanity] block contains duplicate transaction")
 		}
-		existingTxIds[txId] = struct{}{}
+		existingTxIDs[txID] = struct{}{}
 
 		// Check for transaction sanity
 		if errCode := CheckTransactionSanity(version, txn); errCode != Success {
@@ -106,22 +105,10 @@ func PowCheckBlockSanity(block *Block, powLimit *big.Int, timeSource MedianTimeS
 			existingTxInputs[referKey] = struct{}{}
 		}
 
-		if txn.IsWithdrawFromSideChainTx() {
-			witPayload := txn.Payload.(*PayloadWithdrawFromSideChain)
-
-			// Check for duplicate sidechain tx in a block
-			for _, hash := range witPayload.SideChainTransactionHashes {
-				if _, exists := existingSideTxs[hash]; exists {
-					return errors.New("[PowCheckBlockSanity] block contains duplicate sidechain Tx")
-				}
-				existingSideTxs[hash] = struct{}{}
-			}
-		}
-
 		// Append transaction to list
-		txIds = append(txIds, txId)
+		txIDs = append(txIDs, txID)
 	}
-	calcTransactionsRoot, err := crypto.ComputeRoot(txIds)
+	calcTransactionsRoot, err := crypto.ComputeRoot(txIDs)
 	if err != nil {
 		return errors.New("[PowCheckBlockSanity] merkleTree compute failed")
 	}
@@ -153,7 +140,7 @@ func CheckBlockContext(block *Block) error {
 	}
 
 	// Reward in coinbase must match 23 IOEX
-	if rewardInCoinbase-totalTxFee != RewardAmountPerBlock {
+	if rewardInCoinbase-totalTxFee != TotalRewardAmountPerBlock {
 		return errors.New("reward amount in coinbase not correct")
 	}
 	return nil

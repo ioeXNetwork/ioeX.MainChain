@@ -41,11 +41,11 @@ func StartRPCServer() {
 	mainMux["getneighbors"] = GetNeighbors
 	mainMux["getnodestate"] = GetNodeState
 	mainMux["sendrawtransaction"] = SendRawTransaction
-	mainMux["getarbitratorgroupbyheight"] = GetArbitratorGroupByHeight
 	mainMux["getbestblockhash"] = GetBestBlockHash
 	mainMux["getblockcount"] = GetBlockCount
 	mainMux["getblockbyheight"] = GetBlockByHeight
-	mainMux["getexistwithdrawtransactions"] = GetExistWithdrawTransactions
+	mainMux["getblocksbyheight"] = GetBlocksByHeight
+	//mainMux["getexistwithdrawtransactions"] = GetExistWithdrawTransactions
 	mainMux["listunspent"] = ListUnspent
 	mainMux["getreceivedbyaddress"] = GetReceivedByAddress
 	// aux interfaces

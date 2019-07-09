@@ -70,6 +70,24 @@ func (ns *neighbours) GetConnectionCount() (internal uint, total uint) {
 	return internal, total
 }
 
+func (ns *neighbours) GetExternalConnectionCount() (external uint) {
+	ns.Lock()
+	defer ns.Unlock()
+	for _, node := range ns.List {
+		// Skip unestablished nodes
+		if node.State() != protocol.ESTABLISHED {
+			continue
+		}
+
+		// Count external nodes
+		if node.IsExternal() {
+			external++
+		}
+	}
+
+	return external
+}
+
 func (ns *neighbours) NodeEstablished(id uint64) bool {
 	ns.Lock()
 	defer ns.Unlock()
@@ -101,18 +119,21 @@ func (ns *neighbours) GetNeighbourAddresses() []*p2p.NetAddress {
 	return addrs
 }
 
-func (ns *neighbours) GetNeighborHeights() []uint64 {
+func (ns *neighbours) GetInternalNeighborAddressAndHeights() ([]string, []uint64) {
 	neighbors := ns.GetNeighborNodes()
 
 	heights := make([]uint64, 0, len(neighbors))
+	addresses := make([]string, 0, len(neighbors))
 	for _, n := range neighbors {
-		if n.State() == protocol.ESTABLISHED {
+		if n.State() == protocol.ESTABLISHED && !n.IsExternal() {
 			height := n.Height()
+			address := n.Addr()
 			heights = append(heights, height)
+			addresses = append(addresses, address)
 		}
 	}
 
-	return heights
+	return addresses, heights
 }
 
 func (ns *neighbours) GetNeighborNodes() []protocol.Noder {
@@ -140,11 +161,22 @@ func (ns *neighbours) GetNeighbourCount() uint {
 	return count
 }
 
-func (ns *neighbours) GetANeighbourRandomly() protocol.Noder {
+func (ns *neighbours) GetInternalNeighbourRandomly() protocol.Noder {
 	ns.Lock()
 	defer ns.Unlock()
 	for _, n := range ns.List {
-		if n.State() == protocol.ESTABLISHED {
+		if n.State() == protocol.ESTABLISHED && !n.IsExternal() {
+			return n
+		}
+	}
+	return nil
+}
+
+func (ns *neighbours) GetExternalNeighbourRandomly() protocol.Noder {
+	ns.Lock()
+	defer ns.Unlock()
+	for _, n := range ns.List {
+		if n.State() == protocol.ESTABLISHED && n.IsExternal() {
 			return n
 		}
 	}

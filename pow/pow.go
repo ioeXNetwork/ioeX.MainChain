@@ -24,9 +24,10 @@ import (
 
 var TaskCh chan bool
 
-const (
-	maxNonce       = ^uint32(0) // 2^32 - 1
-	hashUpdateSecs = 15
+var (
+	maxNonce = ^uint32(0) // 2^32 - 1
+	//hashUpdateSecs = 15
+	hashUpdateSecs = (config.Parameters.ChainParam.TargetTimePerBlock / time.Second) * 2
 )
 
 type auxBlockPool struct {
@@ -78,8 +79,13 @@ func (pow *PowService) CreateCoinbaseTx(nextBlockHeight uint32, minerAddr string
 		return nil, err
 	}
 
+	minerInfo := config.Parameters.PowConfiguration.MinerInfo
+	if minerInfo == "" {
+		minerInfo = config.Parameters.PowConfiguration.PayToAddr
+	}
+
 	pd := &PayloadCoinBase{
-		CoinbaseData: []byte(config.Parameters.PowConfiguration.MinerInfo),
+		CoinbaseData: []byte(minerInfo),
 	}
 
 	txn := NewCoinBaseTransaction(pd, DefaultLedger.Blockchain.GetBestHeight()+1)
@@ -93,6 +99,11 @@ func (pow *PowService) CreateCoinbaseTx(nextBlockHeight uint32, minerAddr string
 		},
 	}
 	txn.Outputs = []*Output{
+		{
+			AssetID:     DefaultLedger.Blockchain.AssetID,
+			Value:       0,
+			ProgramHash: FoundationAddress11,
+		},
 		{
 			AssetID:     DefaultLedger.Blockchain.AssetID,
 			Value:       0,
@@ -173,11 +184,12 @@ func (pow *PowService) GenerateBlock(minerAddr string) (*Block, error) {
 		txCount++
 	}
 
-	blockReward := RewardAmountPerBlock
-	totalReward := totalTxFee + blockReward
+	blockReward := MinerRewardAmountPerBlock
+	//totalReward := totalTxFee + blockReward
+	totalReward := blockReward
 
-	// PoW miners and DPoS are each equally allocated 35%. The remaining 30% goes to the Cyber Republic fund
-	msgBlock.Transactions[0].Outputs[0].Value = totalReward
+	msgBlock.Transactions[0].Outputs[0].Value = FoundationRewardAmountPerBlock + totalTxFee
+	msgBlock.Transactions[0].Outputs[1].Value = totalReward
 
 	txHash := make([]common.Uint256, 0, len(msgBlock.Transactions))
 	for _, tx := range msgBlock.Transactions {
@@ -207,9 +219,6 @@ func (pow *PowService) DiscreteMining(n uint32) ([]*common.Uint256, error) {
 	log.Debugf("Pow generating %d blocks", n)
 	i := uint32(0)
 	blockHashes := make([]*common.Uint256, 0)
-	//ticker := time.NewTicker(time.Second * hashUpdateSecs)
-	ticker := time.NewTicker(time.Minute * 2)
-	defer ticker.Stop()
 
 	for {
 		log.Debug("<================Discrete Mining==============>\n")
@@ -220,7 +229,7 @@ func (pow *PowService) DiscreteMining(n uint32) ([]*common.Uint256, error) {
 			continue
 		}
 
-		if pow.SolveBlock(msgBlock, ticker) {
+		if pow.SolveBlock(msgBlock) {
 			if msgBlock.Header.Height == DefaultLedger.Blockchain.GetBestHeight()+1 {
 				inMainChain, isOrphan, err := DefaultLedger.Blockchain.AddBlock(msgBlock)
 				if err != nil {
@@ -247,40 +256,36 @@ func (pow *PowService) DiscreteMining(n uint32) ([]*common.Uint256, error) {
 	}
 }
 
-func (pow *PowService) SolveBlock(MsgBlock *Block, ticker *time.Ticker) bool {
+func (pow *PowService) SolveBlock(MsgBlock *Block) bool {
+	ticker := time.NewTicker(time.Second * hashUpdateSecs)
+	defer ticker.Stop()
+
 	// fake a btc blockheader and coinbase
 	auxPow := auxpow.GenerateAuxPow(MsgBlock.Hash())
 	header := MsgBlock.Header
-	log.Debugf("header.Bits %08x", header.Bits) //hungjiun
+	log.Debugf("header.Bits %08x", header.Bits)
 	targetDifficulty := CompactToBig(header.Bits)
-	log.Debugf("targetDifficulty %064x", targetDifficulty) //hungjiun
+	log.Debugf("targetDifficulty %064x", targetDifficulty)
 
-	log.Debug("time start", time.Now()) //hungjiun
 	for i := uint32(0); i <= maxNonce; i++ {
-		/*
-			select {
-			case <-ticker.C:
-				// if !MsgBlock.Header.Previous.IsEqual(*DefaultLedger.Blockchain.BestChain.Hash) {
-				// 	return false
-				// }
-				log.Trace("time end 3", time.Now()) //hungjiun
-				return false
+		select {
+		case <-ticker.C:
+			// if !MsgBlock.Header.Previous.IsEqual(*DefaultLedger.Blockchain.BestChain.Hash) {
+			// 	return false
+			// }
+			return false
 
-			default:
-				// Non-blocking select to fall through
-			}
-		*/
+		default:
+			// Non-blocking select to fall through
+		}
 
 		auxPow.ParBlockHeader.Nonce = i
 		hash := auxPow.ParBlockHeader.Hash() // solve parBlockHeader hash
 		if HashToBig(&hash).Cmp(targetDifficulty) <= 0 {
-			log.Debug("hash : ", hash, ", i : ", i) //hungjiun
 			MsgBlock.Header.AuxPow = *auxPow
-			log.Debug("time end 1", time.Now()) //hungjiun
 			return true
 		}
 	}
-	log.Warn("time end 2", time.Now()) //hungjiun
 
 	return false
 }
@@ -358,8 +363,6 @@ func NewPowService() *PowService {
 }
 
 func (pow *PowService) cpuMining() {
-	ticker := time.NewTicker(time.Second * hashUpdateSecs)
-	defer ticker.Stop()
 
 out:
 	for {
@@ -379,8 +382,8 @@ out:
 		}
 
 		//begin to mine the block with POW
-		if pow.SolveBlock(msgBlock, ticker) {
-			log.Debug("<================Solved Block==============>")
+		if pow.SolveBlock(msgBlock) {
+			log.Info("<================Solved Block==============>")
 			//send the valid block to p2p networkd
 			if msgBlock.Header.Height == DefaultLedger.Blockchain.GetBestHeight()+1 {
 				inMainChain, isOrphan, err := DefaultLedger.Blockchain.AddBlock(msgBlock)

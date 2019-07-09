@@ -3,14 +3,11 @@ package config
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"os"
 	"time"
-
-	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 const (
@@ -23,40 +20,73 @@ var (
 	Parameters configParams
 	Version    string
 	mainNet    = &ChainParams{
-		Name:               "MainNet",
-		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
-		PowLimitBits:       0x1e00f8ff,
-		TargetTimePerBlock: time.Minute * 2,
-		TargetTimespan:     time.Minute * 2 * 720,
-		AdjustmentFactor:   int64(4),
-		MaxOrphanBlocks:    10000,
-		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain",
+		Name:                "MainNet",
+		PowLimit:            new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
+		PowLimitBits:        0x1e00f8ff,
+		TargetTimePerBlock:  time.Minute * 2,
+		TargetTimespan:      time.Minute * 2 * 720,
+		AdjustmentFactor:    int64(4),
+		MaxOrphanBlocks:     10000,
+		MinMemoryNodes:      20160,
+		CoinbaseLockTime:    100,
+		ChainStorePath:      "Chain",
+		FoundationAddress1:  "EeKhwVwcHudP12cMmHY7FyZKmhawd4NyMv",
+		FoundationAddress2:  "EWKRQLkd1WtAK2Y6WUHKqefHwDjAyGxTEW",
+		FoundationAddress3:  "Ebkho6hHKZdwhoFqC5rCfA3YvSV5TC5D7U",
+		FoundationAddress4:  "EWbWYW5qfsH8ZEXDiPfLJ2H5N1AC9BKU7R",
+		FoundationAddress5:  "EaJXQytPHwUZF11NWezBgHr9CzsWW5gRy7",
+		FoundationAddress6:  "EeC9gKGoAuYwN1eGyC4XV3BR6HqVwQa9Ci",
+		FoundationAddress7:  "EMTUBvw8ALSNtYU8VwfdqPLCsDCT1GXbii",
+		FoundationAddress8:  "EPivxnWofDfeCSAmmS9pKdYBxi9FyUVnR5",
+		FoundationAddress9:  "EWgdFRoPeZnv1VrGjGev1XGHKWxU8wsqAM",
+		FoundationAddress10: "EN2QYLxznYT8MaciT2MkNfs2TcMog72h7a",
+		FoundationAddress11: "ELPp9Gr1qvTjXEGLWVbYG288A9fvxeyXZJ",
 	}
 	testNet = &ChainParams{
-		Name:               "TestNet",
-		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
-		PowLimitBits:       0x1e1da5ff,
-		TargetTimePerBlock: time.Second * 10,
-		TargetTimespan:     time.Second * 10 * 10,
-		AdjustmentFactor:   int64(4),
-		MaxOrphanBlocks:    10000,
-		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain/TestNet",
+		Name:                "TestNet",
+		PowLimit:            new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
+		PowLimitBits:        0x1e1da5ff,
+		TargetTimePerBlock:  time.Second * 10,
+		TargetTimespan:      time.Second * 10 * 10,
+		AdjustmentFactor:    int64(4),
+		MaxOrphanBlocks:     10000,
+		MinMemoryNodes:      20160,
+		CoinbaseLockTime:    100,
+		ChainStorePath:      "Chain/TestNet",
+		FoundationAddress1:  "EeKhwVwcHudP12cMmHY7FyZKmhawd4NyMv",
+		FoundationAddress2:  "EWKRQLkd1WtAK2Y6WUHKqefHwDjAyGxTEW",
+		FoundationAddress3:  "Ebkho6hHKZdwhoFqC5rCfA3YvSV5TC5D7U",
+		FoundationAddress4:  "EWbWYW5qfsH8ZEXDiPfLJ2H5N1AC9BKU7R",
+		FoundationAddress5:  "EaJXQytPHwUZF11NWezBgHr9CzsWW5gRy7",
+		FoundationAddress6:  "EeC9gKGoAuYwN1eGyC4XV3BR6HqVwQa9Ci",
+		FoundationAddress7:  "EMTUBvw8ALSNtYU8VwfdqPLCsDCT1GXbii",
+		FoundationAddress8:  "EPivxnWofDfeCSAmmS9pKdYBxi9FyUVnR5",
+		FoundationAddress9:  "EWgdFRoPeZnv1VrGjGev1XGHKWxU8wsqAM",
+		FoundationAddress10: "EN2QYLxznYT8MaciT2MkNfs2TcMog72h7a",
+		FoundationAddress11: "ELPp9Gr1qvTjXEGLWVbYG288A9fvxeyXZJ",
 	}
 	regNet = &ChainParams{
-		Name:               "RegNet",
-		PowLimit:           new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
-		PowLimitBits:       0x207fffff,
-		TargetTimePerBlock: time.Second * 1,
-		TargetTimespan:     time.Second * 1 * 10,
-		AdjustmentFactor:   int64(4),
-		MaxOrphanBlocks:    10000,
-		MinMemoryNodes:     20160,
-		CoinbaseLockTime:   100,
-		ChainStorePath:     "Chain/RegNet",
+		Name:                "RegNet",
+		PowLimit:            new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1)),
+		PowLimitBits:        0x207fffff,
+		TargetTimePerBlock:  time.Second * 1,
+		TargetTimespan:      time.Second * 1 * 10,
+		AdjustmentFactor:    int64(4),
+		MaxOrphanBlocks:     10000,
+		MinMemoryNodes:      20160,
+		CoinbaseLockTime:    100,
+		ChainStorePath:      "Chain/RegNet",
+		FoundationAddress1:  "EeKhwVwcHudP12cMmHY7FyZKmhawd4NyMv",
+		FoundationAddress2:  "EWKRQLkd1WtAK2Y6WUHKqefHwDjAyGxTEW",
+		FoundationAddress3:  "Ebkho6hHKZdwhoFqC5rCfA3YvSV5TC5D7U",
+		FoundationAddress4:  "EWbWYW5qfsH8ZEXDiPfLJ2H5N1AC9BKU7R",
+		FoundationAddress5:  "EaJXQytPHwUZF11NWezBgHr9CzsWW5gRy7",
+		FoundationAddress6:  "EeC9gKGoAuYwN1eGyC4XV3BR6HqVwQa9Ci",
+		FoundationAddress7:  "EMTUBvw8ALSNtYU8VwfdqPLCsDCT1GXbii",
+		FoundationAddress8:  "EPivxnWofDfeCSAmmS9pKdYBxi9FyUVnR5",
+		FoundationAddress9:  "EWgdFRoPeZnv1VrGjGev1XGHKWxU8wsqAM",
+		FoundationAddress10: "EN2QYLxznYT8MaciT2MkNfs2TcMog72h7a",
+		FoundationAddress11: "ELPp9Gr1qvTjXEGLWVbYG288A9fvxeyXZJ",
 	}
 )
 
@@ -98,7 +128,6 @@ type Configuration struct {
 	MaxTxsInBlock       int              `json:"MaxTransactionInBlock"`
 	MaxBlockSize        int              `json:"MaxBlockSize"`
 	PowConfiguration    PowConfiguration `json:"PowConfiguration"`
-	Arbiters            []string         `json:"Arbiters"`
 }
 
 type ConfigFile struct {
@@ -116,6 +145,18 @@ type ChainParams struct {
 	MinMemoryNodes     uint32
 	CoinbaseLockTime   uint32
 	ChainStorePath     string
+
+	FoundationAddress1  string //20%
+	FoundationAddress2  string //35%
+	FoundationAddress3  string //17%
+	FoundationAddress4  string //4.5%
+	FoundationAddress5  string //4.5%
+	FoundationAddress6  string //1%
+	FoundationAddress7  string //2%
+	FoundationAddress8  string //3%
+	FoundationAddress9  string //5%
+	FoundationAddress10 string //5%
+	FoundationAddress11 string //3% reward
 }
 
 type configParams struct {
@@ -147,22 +188,4 @@ func init() {
 	} else if Parameters.PowConfiguration.ActiveNet == "RegNet" {
 		Parameters.ChainParam = regNet
 	}
-}
-
-func (config *Configuration) GetArbitrators() ([][]byte, error) {
-	//todo finish this when arbitrator election scenario is done
-	if len(config.Arbiters) == 0 {
-		return nil, errors.New("arbiters not configured")
-	}
-
-	var arbitersByte [][]byte
-	for _, arbiter := range config.Arbiters {
-		arbiterByte, err := common.HexStringToBytes(arbiter)
-		if err != nil {
-			return nil, err
-		}
-		arbitersByte = append(arbitersByte, arbiterByte)
-	}
-
-	return arbitersByte, nil
 }

@@ -1,13 +1,11 @@
 package blockchain
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"errors"
 	"fmt"
 	"sort"
 
-	"github.com/ioeXNetwork/ioeX.MainChain/config"
 	. "github.com/ioeXNetwork/ioeX.MainChain/core"
 
 	"github.com/ioeXNetwork/ioeX.Utility/common"
@@ -41,11 +39,6 @@ func RunPrograms(data []byte, hashes []common.Uint168, programs []*Program) erro
 
 		} else if signType == common.MULTISIG {
 			if err = checkMultiSigSignatures(*program, data); err != nil {
-				return err
-			}
-
-		} else if signType == common.CROSSCHAIN {
-			if err = checkCrossChainSignatures(*program, data); err != nil {
 				return err
 			}
 
@@ -119,27 +112,6 @@ func checkMultiSigSignatures(program Program, data []byte) error {
 	return verifyMultisigSignatures(m, n, publicKeys, program.Parameter, data)
 }
 
-func checkCrossChainSignatures(program Program, data []byte) error {
-	code := program.Code
-	// Get N parameter
-	n := int(code[len(code)-2]) - crypto.PUSH1 + 1
-	// Get M parameter
-	m := int(code[0]) - crypto.PUSH1 + 1
-	if m < 1 || m > n {
-		return errors.New("invalid multi sign script code")
-	}
-	publicKeys, err := crypto.ParseCrossChainScript(code)
-	if err != nil {
-		return err
-	}
-
-	if err := checkCrossChainArbitrators(publicKeys); err != nil {
-		return err
-	}
-
-	return verifyMultisigSignatures(m, n, publicKeys, program.Parameter, data)
-}
-
 func verifyMultisigSignatures(m, n int, publicKeys [][]byte, signatures, data []byte) error {
 	if len(publicKeys) != n {
 		return errors.New("invalid multi sign public key script count")
@@ -180,31 +152,6 @@ func verifyMultisigSignatures(m, n int, publicKeys [][]byte, signatures, data []
 		return errors.New("matched signatures not enough")
 	}
 
-	return nil
-}
-
-func checkCrossChainArbitrators(publicKeys [][]byte) error {
-	arbitrators, err := config.Parameters.GetArbitrators()
-	if err != nil {
-		return err
-	}
-	if len(arbitrators) != len(publicKeys) {
-		return errors.New("Invalid arbitrator count.")
-	}
-
-	for _, arbitrator := range arbitrators {
-		found := false
-		for _, pk := range publicKeys {
-			if bytes.Equal(arbitrator, pk[1:]) {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return errors.New("Invalid cross chain arbitrators")
-		}
-	}
 	return nil
 }
 

@@ -14,15 +14,11 @@ import (
 type TransactionType byte
 
 const (
-	CoinBase                TransactionType = 0x00
-	RegisterAsset           TransactionType = 0x01
-	TransferAsset           TransactionType = 0x02
-	Record                  TransactionType = 0x03
-	Deploy                  TransactionType = 0x04
-	SideChainPow            TransactionType = 0x05
-	RechargeToSideChain     TransactionType = 0x06
-	WithdrawFromSideChain   TransactionType = 0x07
-	TransferCrossChainAsset TransactionType = 0x08
+	CoinBase      TransactionType = 0x00
+	RegisterAsset TransactionType = 0x01
+	TransferAsset TransactionType = 0x02
+	Record        TransactionType = 0x03
+	Deploy        TransactionType = 0x04
 )
 
 func (self TransactionType) Name() string {
@@ -37,14 +33,6 @@ func (self TransactionType) Name() string {
 		return "Record"
 	case Deploy:
 		return "Deploy"
-	case SideChainPow:
-		return "SideChainPow"
-	case RechargeToSideChain:
-		return "RechargeToSideChain"
-	case WithdrawFromSideChain:
-		return "WithdrawFromSideChain"
-	case TransferCrossChainAsset:
-		return "TransferCrossChainAsset"
 	default:
 		return "Unknown"
 	}
@@ -255,22 +243,6 @@ func (tx *Transaction) Hash() Uint256 {
 		tx.hash = &hash
 	}
 	return *tx.hash
-}
-
-func (tx *Transaction) IsSideChainPowTx() bool {
-	return tx.TxType == SideChainPow
-}
-
-func (tx *Transaction) IsTransferCrossChainAssetTx() bool {
-	return tx.TxType == TransferCrossChainAsset
-}
-
-func (tx *Transaction) IsWithdrawFromSideChainTx() bool {
-	return tx.TxType == WithdrawFromSideChain
-}
-
-func (tx *Transaction) IsRechargeToSideChainTx() bool {
-	return tx.TxType == RechargeToSideChain
 }
 
 func (tx *Transaction) IsCoinBaseTx() bool {

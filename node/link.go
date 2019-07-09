@@ -59,10 +59,12 @@ func (node *node) initConnection() {
 	}
 }
 
-func (node *node) start() {
+func (node *node) start(inbound bool) {
 	go node.inHandler()
 	go node.outHandler()
-	go node.pingHandler()
+	if !inbound {
+		go node.pingHandler()
+	}
 }
 
 func listenNodePort() {
@@ -323,6 +325,7 @@ out:
 		case smsg := <-node.sendQueue:
 			err := p2p.WriteMessage(node.conn, node.magic, smsg)
 			if err != nil {
+				//log.Debugf("node.Disconnect err %d", err)
 				node.Disconnect()
 				continue
 			}

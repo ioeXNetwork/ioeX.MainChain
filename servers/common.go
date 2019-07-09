@@ -2,7 +2,6 @@ package servers
 
 import (
 	. "github.com/ioeXNetwork/ioeX.MainChain/core"
-	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 const TlsPort = 443
@@ -16,6 +15,14 @@ type InputInfo struct {
 	TxID     string `json:"txid"`
 	VOut     uint16 `json:"vout"`
 	Sequence uint32 `json:"sequence"`
+}
+
+type InputInfoV2 struct {
+	TxID     string `json:"txid"`
+	VOut     uint16 `json:"vout"`
+	Sequence uint32 `json:"sequence"`
+	Address  string `json:"address"`
+	Value    string `json:"value"`
 }
 
 type OutputInfo struct {
@@ -32,7 +39,7 @@ type ProgramInfo struct {
 }
 
 type TransactionInfo struct {
-	TxId           string          `json:"txid"`
+	TxID           string          `json:"txid"`
 	Hash           string          `json:"hash"`
 	Size           uint32          `json:"size"`
 	VSize          uint32          `json:"vsize"`
@@ -49,6 +56,28 @@ type TransactionInfo struct {
 	Payload        PayloadInfo     `json:"payload"`
 	Attributes     []AttributeInfo `json:"attributes"`
 	Programs       []ProgramInfo   `json:"programs"`
+	TxFee          uint32          `json:"txFee"`
+}
+
+type TransactionInfoV2 struct {
+	TxID           string          `json:"txid"`
+	Hash           string          `json:"hash"`
+	Size           uint32          `json:"size"`
+	VSize          uint32          `json:"vsize"`
+	Version        uint32          `json:"version"`
+	LockTime       uint32          `json:"locktime"`
+	Inputs         []InputInfoV2   `json:"vin"`
+	Outputs        []OutputInfo    `json:"vout"`
+	BlockHash      string          `json:"blockhash"`
+	Confirmations  uint32          `json:"confirmations"`
+	Time           uint32          `json:"time"`
+	BlockTime      uint32          `json:"blocktime"`
+	TxType         TransactionType `json:"type"`
+	PayloadVersion byte            `json:"payloadversion"`
+	Payload        PayloadInfo     `json:"payload"`
+	Attributes     []AttributeInfo `json:"attributes"`
+	Programs       []ProgramInfo   `json:"programs"`
+	TxFee          uint32          `json:"txFee"`
 }
 
 type BlockInfo struct {
@@ -71,6 +100,7 @@ type BlockInfo struct {
 	PreviousBlockHash string        `json:"previousblockhash"`
 	NextBlockHash     string        `json:"nextblockhash"`
 	AuxPow            string        `json:"auxpow"`
+	MinerInfo         string        `json:"minerinfo"`
 }
 
 type NodeState struct {
@@ -103,11 +133,6 @@ type Neighbor struct {
 	NetAddress string // The tcp address of this neighbor node
 }
 
-type ArbitratorGroupInfo struct {
-	OnDutyArbitratorIndex int
-	Arbitrators           []string
-}
-
 type PayloadInfo interface{}
 
 type CoinbaseInfo struct {
@@ -120,28 +145,9 @@ type RegisterAssetInfo struct {
 	Controller string
 }
 
-type SideChainPowInfo struct {
-	BlockHeight     uint32
-	SideBlockHash   string
-	SideGenesisHash string
-	SignedData      string
-}
-
-type TransferCrossChainAssetInfo struct {
-	CrossChainAddresses []string
-	OutputIndexes       []uint64
-	CrossChainAmounts   []common.Fixed64
-}
-
-type WithdrawFromSideChainInfo struct {
-	BlockHeight                uint32
-	GenesisBlockAddress        string
-	SideChainTransactionHashes []string
-}
-
 type UTXOInfo struct {
-	AssetId       string `json:"assetid"`
-	Txid          string `json:"txid"`
+	AssetID       string `json:"assetid"`
+	TxID          string `json:"txid"`
 	VOut          uint32 `json:"vout"`
 	Address       string `json:"address"`
 	Amount        string `json:"amount"`

@@ -21,7 +21,7 @@ const (
 	MaxSyncHdrReq      = 2 //Max Concurrent Sync Header Request
 	MaxOutBoundCount   = 8
 	DefaultMaxPeers    = 125
-	MaxIdCached        = 5000
+	MaxIDCached        = 5000
 )
 
 const (
@@ -87,7 +87,6 @@ type Noder interface {
 	GetConnectionCount() (uint, uint)
 	GetTransactionPool(bool) map[common.Uint256]*core.Transaction
 	AppendToTxnPool(*core.Transaction) errors.ErrCode
-	IsDuplicateSidechainTx(sidechainTxHash common.Uint256) bool
 	ExistedID(id common.Uint256) bool
 	RequireNeighbourList()
 	UpdateInfo(t time.Time, version uint32, services uint64,
