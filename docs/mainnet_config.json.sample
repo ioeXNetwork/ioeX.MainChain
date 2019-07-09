@@ -3,18 +3,11 @@
     "Magic": 2017001,
     "Version": 23,
     "SeedList": [
-      "node-mainnet-002.ioex.co:20866",
-      "node-mainnet-006.ioex.co:20866",
-      "node-mainnet-014.ioex.co:20866",
-      "node-mainnet-016.ioex.co:20866",
-      "node-mainnet-021.ioex.co:20866",
-      "node-mainnet-003.ioex.co:20866",
-      "node-mainnet-007.ioex.co:20866",
-      "node-mainnet-015.ioex.co:20866",
-      "node-mainnet-017.ioex.co:20866",
-      "node-mainnet-022.ioex.co:20866",
-      "node-mainnet-004.ioex.co:20866",
-      "node-mainnet-023.ioex.co:20866"
+      "node-mainnet-002.ioex:20388",
+      "node-mainnet-006.ioex:20388",
+      "node-mainnet-014.ioex:20388",
+      "node-mainnet-016.ioex:20388",
+      "node-mainnet-021.ioex:20388"
     ],
     "HttpInfoPort": 20333,
     "HttpInfoStart": true,
@@ -44,13 +37,6 @@
       "MinerInfo": "IOEX",
       "MinTxFee": 100,
       "ActiveNet": "MainNet"
-    },
-    "Arbiters":[
-      "0248df6705a909432be041e0baa25b8f648741018f70d1911f2ed28778db4b8fe4",
-      "02771faf0f4d4235744b30972d5f2c470993920846c761e4d08889ecfdc061cddf",
-      "0342196610e57d75ba3afa26e030092020aec56822104e465cba1d8f69f8d83c8e",
-      "02fa3e0d14e0e93ca41c3c0f008679e417cf2adb6375dd4bbbee9ed8e8db606a56",
-      "03ab3ecd1148b018d480224520917c6c3663a3631f198e3b25cf4c9c76786b7850"
-    ]
+    }
   }
 }

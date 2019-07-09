@@ -51,14 +51,7 @@
       "MinerInfo": "IOEX",           //No need to change.
       "MinTxFee": 100,              //Minimal mining fee
       "ActiveNet": "MainNet"        //Network type. Choices: MainNet、TestNet、RegNet，RegNet. Mining interval are 120s、10s、1s accordingly. Difficulty factor high to low.
-    },
-    "Arbiters": [          //Public keys of the arbitrator nodes, used to verify cross-chain transfer transactions and sidechain blocks
-      "03e333657c788a20577c0288559bd489ee65514748d18cb1dc7560ae4ce3d45613",
-      "02dd22722c3b3a284929e4859b07e6a706595066ddd2a0b38e5837403718fb047c",
-      "03e4473b918b499e4112d281d805fc8d8ae7ac0a71ff938cba78006bf12dd90a85",
-      "03dd66833d28bac530ca80af0efbfc2ec43b4b87504a41ab4946702254e7f48961",
-      "02c8a87c076112a1b344633184673cfb0bb6bce1aca28c78986a7b1047d257a448"
-    ]
+    }
   }
 }
 

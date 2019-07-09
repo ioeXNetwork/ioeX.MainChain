@@ -1,6 +1,6 @@
-# The RESTFUL API Of Elastos Node
+# The RESTFUL API Of ioeX Node
 
-`ELA Node` uses the `2*334` port to provide the following interface services:
+`IOEX Node` uses the `2*334` port to provide the following interface services:
 
 * `/api/v1/node/connectioncount` : Returns the number of nodes to which the node is connected
 

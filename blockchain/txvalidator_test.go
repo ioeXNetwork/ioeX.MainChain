@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"bytes"
-	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
 	"math"
@@ -14,7 +13,6 @@ import (
 	"github.com/ioeXNetwork/ioeX.MainChain/log"
 
 	"github.com/ioeXNetwork/ioeX.Utility/common"
-	"github.com/ioeXNetwork/ioeX.Utility/crypto"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -137,94 +135,6 @@ func TestCheckTransactionInput(t *testing.T) {
 	assert.EqualError(t, err, "duplicated transaction inputs")
 
 	t.Log("[TestCheckTransactionInput] PASSED")
-}
-
-func TestCheckTransactionOutput(t *testing.T) {
-	// coinbase
-	tx := NewCoinBaseTransaction(new(core.PayloadCoinBase), 0)
-	tx.Outputs = []*core.Output{
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress},
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress},
-	}
-	err := CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.NoError(t, err)
-
-	// outputs < 2
-	tx.Outputs = []*core.Output{
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress},
-	}
-	err = CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.EqualError(t, err, "coinbase output is not enough, at least 2")
-
-	// invalid asset id
-	tx.Outputs = []*core.Output{
-		{AssetID: common.EmptyHash, ProgramHash: FoundationAddress},
-		{AssetID: common.EmptyHash, ProgramHash: FoundationAddress},
-	}
-	err = CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.EqualError(t, err, "asset ID in coinbase is invalid")
-
-	// reward to foundation in coinbase = 30%
-	totalReward := RewardAmountPerBlock
-	t.Logf("Block reward amount %s", totalReward.String())
-	foundationReward := common.Fixed64(float64(totalReward) * 0.3)
-	t.Logf("Foundation reward amount %s", foundationReward.String())
-	minerReward := totalReward - foundationReward
-	t.Logf("Miner reward amount %s", minerReward.String())
-	tx.Outputs = []*core.Output{
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress, Value: foundationReward},
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: common.Uint168{}, Value: minerReward},
-	}
-	err = CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.NoError(t, err)
-
-	// reward to foundation in coinbase < 30%
-	foundationReward = common.Fixed64(float64(totalReward) * 0.2999999)
-	t.Logf("Foundation reward amount %s", foundationReward.String())
-	minerReward = totalReward - foundationReward
-	t.Logf("Miner reward amount %s", minerReward.String())
-	tx.Outputs = []*core.Output{
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: FoundationAddress, Value: foundationReward},
-		{AssetID: DefaultLedger.Blockchain.AssetID, ProgramHash: common.Uint168{}, Value: minerReward},
-	}
-	err = CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.EqualError(t, err, "Reward to foundation in coinbase < 30%")
-
-	// normal transaction
-	tx = buildTx()
-	for _, output := range tx.Outputs {
-		output.AssetID = DefaultLedger.Blockchain.AssetID
-		output.ProgramHash = common.Uint168{}
-	}
-	err = CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.NoError(t, err)
-
-	// outputs < 1
-	tx.Outputs = nil
-	err = CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.EqualError(t, err, "transaction has no outputs")
-
-	// invalid asset ID
-	tx.Outputs = randomOutputs()
-	for _, output := range tx.Outputs {
-		output.AssetID = common.EmptyHash
-		output.ProgramHash = common.Uint168{}
-	}
-	err = CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.EqualError(t, err, "asset ID in output is invalid")
-
-	// invalid program hash
-	tx.Outputs = randomOutputs()
-	for _, output := range tx.Outputs {
-		output.AssetID = DefaultLedger.Blockchain.AssetID
-		address := common.Uint168{}
-		address[0] = 0x23
-		output.ProgramHash = address
-	}
-	err = CheckTransactionOutput(core.CheckTxOut, tx)
-	assert.EqualError(t, err, "output address is invalid")
-
-	t.Log("[TestCheckTransactionOutput] PASSED")
 }
 
 func TestCheckAssetPrecision(t *testing.T) {

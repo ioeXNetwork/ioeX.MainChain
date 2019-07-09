@@ -1,13 +1,11 @@
 package blockchain
 
 import (
-	"testing"
 	"time"
 
 	"github.com/ioeXNetwork/ioeX.MainChain/config"
 
 	"github.com/ioeXNetwork/ioeX.Utility/common"
-	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -17,16 +15,6 @@ var (
 	SubsidyInterval  = 365 * 24 * 60 * 60 / TargetTimePerBlock
 	RetargetPersent  = 25
 )
-
-func TestGetBlockRewardAmount(t *testing.T) {
-	var blocks = uint32(GeneratedBlocksPerYear)
-	for i := uint32(0); i < blocks; i++ {
-		if !assert.Equal(t, calcBlockSubsidy(i), RewardAmountPerBlock) {
-			break
-		}
-	}
-	t.Logf("Circulation test finished with %d blocks", blocks)
-}
 
 func calcBlockSubsidy(currentHeight uint32) common.Fixed64 {
 	ToTalAmountOfEla := int64(OrginAmountOfEla)

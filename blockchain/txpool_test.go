@@ -2,13 +2,10 @@ package blockchain
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"testing"
 
-	"github.com/ioeXNetwork/ioeX.MainChain/auxpow"
 	"github.com/ioeXNetwork/ioeX.MainChain/config"
 	"github.com/ioeXNetwork/ioeX.MainChain/core"
 	"github.com/ioeXNetwork/ioeX.MainChain/errors"

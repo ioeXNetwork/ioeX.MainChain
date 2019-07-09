@@ -1,6 +1,6 @@
-# The Node API Of Elastos
+# The Node API Of ioeX
 
-`ELA Node` 使用 `2*334` 端口提供如下接口服务：
+`IOEX Node` 使用 `2*334` 端口提供如下接口服务：
 
 * `/api/v1/node/connectioncount` : 获取当前节点所连接到的节点数量
 
