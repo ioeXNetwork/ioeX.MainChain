@@ -25,9 +25,6 @@ type IChainStore interface {
 	PersistAsset(assetid Uint256, asset Asset) error
 	GetAsset(hash Uint256) (*Asset, error)
 
-	PersistSidechainTx(sidechainTxHash Uint256)
-	GetSidechainTx(sidechainTxHash Uint256) (byte, error)
-
 	GetCurrentBlockHash() Uint256
 	GetHeight() uint32
 
@@ -40,7 +37,6 @@ type IChainStore interface {
 	GetAssets() map[Uint256]*Asset
 
 	IsTxHashDuplicate(txhash Uint256) bool
-	IsSidechainTxHashDuplicate(sidechainTxHash Uint256) bool
 	IsBlockInStore(hash Uint256) bool
 	Close()
 }

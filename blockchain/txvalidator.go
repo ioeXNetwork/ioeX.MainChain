@@ -47,11 +47,6 @@ func CheckTransactionSanity(version uint32, txn *Transaction) ErrCode {
 		return ErrTransactionPayload
 	}
 
-	if err := CheckDuplicateSidechainTx(txn); err != nil {
-		log.Warn("[CheckDuplicateSidechainTx],", err)
-		return ErrSidechainTxDuplicate
-	}
-
 	// check iterms above for Coinbase transaction
 	if txn.IsCoinBaseTx() {
 		return Success
@@ -72,17 +67,6 @@ func CheckTransactionContext(txn *Transaction) ErrCode {
 		return Success
 	}
 
-	if txn.IsSideChainPowTx() {
-		arbitrtor, err := GetCurrentArbiter()
-		if err != nil {
-			return ErrSideChainPowConsensus
-		}
-		if err = CheckSideChainPowConsensus(txn, arbitrtor); err != nil {
-			log.Warn("[CheckSideChainPowConsensus],", err)
-			return ErrSideChainPowConsensus
-		}
-	}
-
 	// check double spent transaction
 	if DefaultLedger.IsDoubleSpend(txn) {
 		log.Warn("[CheckTransactionContext] IsDoubleSpend check faild.")
@@ -93,20 +77,6 @@ func CheckTransactionContext(txn *Transaction) ErrCode {
 	if err != nil {
 		log.Warn("[CheckTransactionContext] get transaction reference failed")
 		return ErrUnknownReferredTx
-	}
-
-	if txn.IsWithdrawFromSideChainTx() {
-		if err := CheckWithdrawFromSideChainTransaction(txn, references); err != nil {
-			log.Warn("[CheckWithdrawFromSideChainTransaction],", err)
-			return ErrSidechainTxDuplicate
-		}
-	}
-
-	if txn.IsTransferCrossChainAssetTx() {
-		if err := CheckTransferCrossChainAssetTransaction(txn, references); err != nil {
-			log.Warn("[CheckTransferCrossChainAssetTransaction],", err)
-			return ErrInvalidOutput
-		}
 	}
 
 	if err := CheckTransactionUTXOLock(txn, references); err != nil {
@@ -410,138 +380,8 @@ func CheckTransactionPayload(txn *Transaction) error {
 	case *PayloadTransferAsset:
 	case *PayloadRecord:
 	case *PayloadCoinBase:
-	case *PayloadSideChainPow:
-	case *PayloadWithdrawFromSideChain:
-	case *PayloadTransferCrossChainAsset:
 	default:
 		return errors.New("[txValidator],invalidate transaction payload type.")
-	}
-	return nil
-}
-
-//validate the transaction of duplicate sidechain transaction
-func CheckDuplicateSidechainTx(txn *Transaction) error {
-	if txn.IsWithdrawFromSideChainTx() {
-		witPayload := txn.Payload.(*PayloadWithdrawFromSideChain)
-		existingHashs := make(map[Uint256]struct{})
-		for _, hash := range witPayload.SideChainTransactionHashes {
-			if _, exist := existingHashs[hash]; exist {
-				return errors.New("Duplicate sidechain tx detected in a transaction")
-			}
-			existingHashs[hash] = struct{}{}
-		}
-	}
-	return nil
-}
-
-func GetCurrentArbiter() ([]byte, error) {
-	arbitrators, err := config.Parameters.GetArbitrators()
-	if err != nil {
-		return nil, err
-	}
-	height := DefaultLedger.Store.GetHeight()
-	index := height % uint32(len(arbitrators))
-	arbitrator := arbitrators[index]
-
-	return arbitrator, nil
-}
-
-func CheckSideChainPowConsensus(txn *Transaction, arbitrator []byte) error {
-	payloadSideChainPow, ok := txn.Payload.(*PayloadSideChainPow)
-	if !ok {
-		return errors.New("Side mining transaction has invalid payload")
-	}
-
-	publicKey, err := DecodePoint(arbitrator)
-	if err != nil {
-		return err
-	}
-
-	buf := new(bytes.Buffer)
-	err = payloadSideChainPow.Serialize(buf, SideChainPowPayloadVersion)
-	if err != nil {
-		return err
-	}
-
-	err = Verify(*publicKey, buf.Bytes()[0:68], payloadSideChainPow.SignedData)
-	if err != nil {
-		return errors.New("Arbitrator is not matched")
-	}
-
-	return nil
-}
-
-func CheckWithdrawFromSideChainTransaction(txn *Transaction, references map[*Input]*Output) error {
-	witPayload, ok := txn.Payload.(*PayloadWithdrawFromSideChain)
-	if !ok {
-		return errors.New("Invalid withdraw from side chain payload type")
-	}
-	for _, hash := range witPayload.SideChainTransactionHashes {
-		if exist := DefaultLedger.Store.IsSidechainTxHashDuplicate(hash); exist {
-			return errors.New("Duplicate side chain transaction hash in paylod")
-		}
-	}
-
-	for _, v := range references {
-		if bytes.Compare(v.ProgramHash[0:1], []byte{PrefixCrossChain}) != 0 {
-			return errors.New("Invalid transaction inputs address, without \"X\" at beginning")
-		}
-	}
-
-	return nil
-}
-
-func CheckTransferCrossChainAssetTransaction(txn *Transaction, references map[*Input]*Output) error {
-	payloadObj, ok := txn.Payload.(*PayloadTransferCrossChainAsset)
-	if !ok {
-		return errors.New("Invalid transfer cross chain asset payload type")
-	}
-	if len(payloadObj.CrossChainAddresses) == 0 ||
-		len(payloadObj.CrossChainAddresses) > len(txn.Outputs) ||
-		len(payloadObj.CrossChainAddresses) != len(payloadObj.CrossChainAmounts) ||
-		len(payloadObj.CrossChainAmounts) != len(payloadObj.OutputIndexes) {
-		return errors.New("Invalid transaction payload content")
-	}
-
-	//check cross chain output index in payload
-	outputIndexMap := make(map[uint64]struct{})
-	for _, outputIndex := range payloadObj.OutputIndexes {
-		if _, exist := outputIndexMap[outputIndex]; exist || int(outputIndex) >= len(txn.Outputs) {
-			return errors.New("Invalid transaction payload cross chain index")
-		}
-		outputIndexMap[outputIndex] = struct{}{}
-	}
-
-	//check address in outputs and payload
-	for i := 0; i < len(payloadObj.CrossChainAddresses); i++ {
-		if bytes.Compare(txn.Outputs[payloadObj.OutputIndexes[i]].ProgramHash[0:1], []byte{PrefixCrossChain}) != 0 {
-			return errors.New("Invalid transaction output address, without \"X\" at beginning")
-		}
-		if payloadObj.CrossChainAddresses[i] == "" {
-			return errors.New("Invalid transaction cross chain address ")
-		}
-	}
-
-	//check cross chain amount in payload
-	for i := 0; i < len(payloadObj.CrossChainAmounts); i++ {
-		if payloadObj.CrossChainAmounts[i] < 0 || payloadObj.CrossChainAmounts[i] > txn.Outputs[payloadObj.OutputIndexes[i]].Value-Fixed64(config.Parameters.MinCrossChainTxFee) {
-			return errors.New("Invalid transaction cross chain amount")
-		}
-	}
-
-	//check transaction fee
-	var totalInput Fixed64
-	for _, v := range references {
-		totalInput += v.Value
-	}
-
-	var totalOutput Fixed64
-	for _, output := range txn.Outputs {
-		totalOutput += output.Value
-	}
-
-	if totalInput-totalOutput < Fixed64(config.Parameters.MinCrossChainTxFee) {
-		return errors.New("Invalid transaction fee")
 	}
 	return nil
 }

@@ -3,7 +3,6 @@ package servers
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -706,42 +705,6 @@ func GetBlocksByHeight(param Params) map[string]interface{} {
 	return ResponsePack(errCode, result)
 }
 
-func GetArbitratorGroupByHeight(param Params) map[string]interface{} {
-	height, ok := param.Uint("height")
-	if !ok {
-		return ResponsePack(InvalidParams, "height parameter should be a positive integer")
-	}
-
-	hash, err := chain.DefaultLedger.Store.GetBlockHash(uint32(height))
-	if err != nil {
-		return ResponsePack(UnknownBlock, "")
-	}
-
-	block, err := chain.DefaultLedger.Store.GetBlock(hash)
-	if err != nil {
-		return ResponsePack(InternalError, "")
-	}
-
-	arbitratorsBytes, err := config.Parameters.GetArbitrators()
-	if err != nil {
-		return ResponsePack(InternalError, "")
-	}
-
-	index := int(block.Header.Height) % len(arbitratorsBytes)
-
-	var arbitrators []string
-	for _, data := range arbitratorsBytes {
-		arbitrators = append(arbitrators, BytesToHexString(data))
-	}
-
-	result := ArbitratorGroupInfo{
-		OnDutyArbitratorIndex: index,
-		Arbitrators:           arbitrators,
-	}
-
-	return ResponsePack(Success, result)
-}
-
 //Asset
 func GetAssetByHash(param Params) map[string]interface{} {
 	str, ok := param.String("hash")
@@ -1123,43 +1086,6 @@ func GetTransactionByHashV2(param Params) map[string]interface{} {
 	return ResponsePack(Success, GetTransactionInfoV2(header, txn))
 }
 
-func GetExistWithdrawTransactions(param Params) map[string]interface{} {
-	txsStr, ok := param.String("txs")
-	if !ok {
-		return ResponsePack(InvalidParams, "txs not found")
-	}
-
-	txsBytes, err := HexStringToBytes(txsStr)
-	if err != nil {
-		return ResponsePack(InvalidParams, "")
-	}
-
-	var txHashes []string
-	err = json.Unmarshal(txsBytes, &txHashes)
-	if err != nil {
-		return ResponsePack(InvalidParams, "")
-	}
-
-	var resultTxHashes []string
-	for _, txHash := range txHashes {
-		txHashBytes, err := HexStringToBytes(txHash)
-		if err != nil {
-			return ResponsePack(InvalidParams, "")
-		}
-		hash, err := Uint256FromBytes(txHashBytes)
-		if err != nil {
-			return ResponsePack(InvalidParams, "")
-		}
-		inStore := chain.DefaultLedger.Store.IsSidechainTxHashDuplicate(*hash)
-		inTxPool := ServerNode.IsDuplicateSidechainTx(*hash)
-		if inTxPool || inStore {
-			resultTxHashes = append(resultTxHashes, txHash)
-		}
-	}
-
-	return ResponsePack(Success, resultTxHashes)
-}
-
 func getPayloadInfo(p Payload) PayloadInfo {
 	switch object := p.(type) {
 	case *PayloadCoinBase:
@@ -1171,27 +1097,6 @@ func getPayloadInfo(p Payload) PayloadInfo {
 		obj.Asset = object.Asset
 		obj.Amount = object.Amount.String()
 		obj.Controller = BytesToHexString(BytesReverse(object.Controller.Bytes()))
-		return obj
-	case *PayloadSideChainPow:
-		obj := new(SideChainPowInfo)
-		obj.BlockHeight = object.BlockHeight
-		obj.SideBlockHash = object.SideBlockHash.String()
-		obj.SideGenesisHash = object.SideGenesisHash.String()
-		obj.SignedData = BytesToHexString(object.SignedData)
-		return obj
-	case *PayloadWithdrawFromSideChain:
-		obj := new(WithdrawFromSideChainInfo)
-		obj.BlockHeight = object.BlockHeight
-		obj.GenesisBlockAddress = object.GenesisBlockAddress
-		for _, hash := range object.SideChainTransactionHashes {
-			obj.SideChainTransactionHashes = append(obj.SideChainTransactionHashes, hash.String())
-		}
-		return obj
-	case *PayloadTransferCrossChainAsset:
-		obj := new(TransferCrossChainAssetInfo)
-		obj.CrossChainAddresses = object.CrossChainAddresses
-		obj.OutputIndexes = object.OutputIndexes
-		obj.CrossChainAmounts = object.CrossChainAmounts
 		return obj
 	case *PayloadTransferAsset:
 	case *PayloadRecord:

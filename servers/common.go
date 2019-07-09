@@ -2,7 +2,6 @@ package servers
 
 import (
 	. "github.com/ioeXNetwork/ioeX.MainChain/core"
-	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 const TlsPort = 443
@@ -23,7 +22,7 @@ type InputInfoV2 struct {
 	VOut     uint16 `json:"vout"`
 	Sequence uint32 `json:"sequence"`
 	Address  string `json:"address"`
-	Value      string `json:"value"`
+	Value    string `json:"value"`
 }
 
 type OutputInfo struct {
@@ -40,7 +39,7 @@ type ProgramInfo struct {
 }
 
 type TransactionInfo struct {
-	TxID          string       `json:"txid"`
+	TxID           string          `json:"txid"`
 	Hash           string          `json:"hash"`
 	Size           uint32          `json:"size"`
 	VSize          uint32          `json:"vsize"`
@@ -134,11 +133,6 @@ type Neighbor struct {
 	NetAddress string // The tcp address of this neighbor node
 }
 
-type ArbitratorGroupInfo struct {
-	OnDutyArbitratorIndex int
-	Arbitrators           []string
-}
-
 type PayloadInfo interface{}
 
 type CoinbaseInfo struct {
@@ -149,25 +143,6 @@ type RegisterAssetInfo struct {
 	Asset      Asset
 	Amount     string
 	Controller string
-}
-
-type SideChainPowInfo struct {
-	BlockHeight     uint32
-	SideBlockHash   string
-	SideGenesisHash string
-	SignedData      string
-}
-
-type TransferCrossChainAssetInfo struct {
-	CrossChainAddresses []string
-	OutputIndexes       []uint64
-	CrossChainAmounts   []common.Fixed64
-}
-
-type WithdrawFromSideChainInfo struct {
-	BlockHeight                uint32
-	GenesisBlockAddress        string
-	SideChainTransactionHashes []string
 }
 
 type UTXOInfo struct {

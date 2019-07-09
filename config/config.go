@@ -3,14 +3,11 @@ package config
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"os"
 	"time"
-
-	"github.com/ioeXNetwork/ioeX.Utility/common"
 )
 
 const (
@@ -131,7 +128,6 @@ type Configuration struct {
 	MaxTxsInBlock       int              `json:"MaxTransactionInBlock"`
 	MaxBlockSize        int              `json:"MaxBlockSize"`
 	PowConfiguration    PowConfiguration `json:"PowConfiguration"`
-	Arbiters            []string         `json:"Arbiters"`
 }
 
 type ConfigFile struct {
@@ -192,22 +188,4 @@ func init() {
 	} else if Parameters.PowConfiguration.ActiveNet == "RegNet" {
 		Parameters.ChainParam = regNet
 	}
-}
-
-func (config *Configuration) GetArbitrators() ([][]byte, error) {
-	//todo finish this when arbitrator election scenario is done
-	if len(config.Arbiters) == 0 {
-		return nil, errors.New("arbiters not configured")
-	}
-
-	var arbitersByte [][]byte
-	for _, arbiter := range config.Arbiters {
-		arbiterByte, err := common.HexStringToBytes(arbiter)
-		if err != nil {
-			return nil, err
-		}
-		arbitersByte = append(arbitersByte, arbiterByte)
-	}
-
-	return arbitersByte, nil
 }

@@ -87,7 +87,6 @@ type Noder interface {
 	GetConnectionCount() (uint, uint)
 	GetTransactionPool(bool) map[common.Uint256]*core.Transaction
 	AppendToTxnPool(*core.Transaction) errors.ErrCode
-	IsDuplicateSidechainTx(sidechainTxHash common.Uint256) bool
 	ExistedID(id common.Uint256) bool
 	RequireNeighbourList()
 	UpdateInfo(t time.Time, version uint32, services uint64,

@@ -306,12 +306,6 @@ func (c *ChainStore) PersistTransactions(b *Block) error {
 				return err
 			}
 		}
-		if txn.TxType == WithdrawFromSideChain {
-			witPayload := txn.Payload.(*PayloadWithdrawFromSideChain)
-			for _, hash := range witPayload.SideChainTransactionHashes {
-				c.PersistSidechainTx(hash)
-			}
-		}
 	}
 	return nil
 }
@@ -324,14 +318,6 @@ func (c *ChainStore) RollbackTransactions(b *Block) error {
 		if txn.TxType == RegisterAsset {
 			if err := c.RollbackAsset(txn.Hash()); err != nil {
 				return err
-			}
-		}
-		if txn.TxType == WithdrawFromSideChain {
-			witPayload := txn.Payload.(*PayloadWithdrawFromSideChain)
-			for _, hash := range witPayload.SideChainTransactionHashes {
-				if err := c.RollbackSidechainTx(hash); err != nil {
-					return err
-				}
 			}
 		}
 	}
@@ -360,14 +346,6 @@ func (c *ChainStore) RollbackAsset(assetID Uint256) error {
 	}
 
 	c.BatchDelete(key.Bytes())
-	return nil
-}
-
-func (c *ChainStore) RollbackSidechainTx(sidechainTxHash Uint256) error {
-	key := []byte{byte(IX_SideChain_Tx)}
-	key = append(key, sidechainTxHash.Bytes()...)
-
-	c.BatchDelete(key)
 	return nil
 }
 
