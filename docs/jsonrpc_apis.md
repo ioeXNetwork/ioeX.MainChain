@@ -121,8 +121,10 @@ arguments sample:
 ```javascript
 {
   "method":"getblock",
-  "params":["0000000000000c128adadedd348061952fa5c9bd78320ee25052d2b74a10573f"],
-  "id": 123
+	"params":{
+		"blockhash":"9a7e8856ca52b79f704b6bd9e2ca00ae0eac2bbd50e2e28ff8910264d1f8d2d7",
+		"verbosity":1
+	}
 }
 ```
 
@@ -294,7 +296,10 @@ argument sample:
 ```javascript
 {
 	"method":"getrawtransaction",
-	"params":["caa0d52ea2b90a08480834b97c271a8b847aadf90057318a33ccc8674b77c796"]
+	"params":{
+		"txid":"c74032c8cd0ef13ce3f952e8acc3ea8d43def7207909447f2bf6aef7a148aeb9",
+		"verbose":true
+	}
 }
 ```
 result sample:(verbose=true)
@@ -381,10 +386,61 @@ result sample:
 
 ```javascript
 {
-  "result":["5da460632a154fe75df0d5ec98560e4bc1115374a37a75e984a534f8da3ca941", "5da460632a154fe75df0d5ec98560e4bc1115374a37a75e984a534f8da3ca941"]
-  "error": null,
-  "id": null,
-  "jsonrpc": "2.0",
+    "error": null,
+    "id": null,
+    "jsonrpc": "2.0",
+    "result":[
+        {
+            "txid": "3478ac264bf77306c515065bec43fd8821bb356e851427676a55cc8531d746fe",
+            "hash": "3478ac264bf77306c515065bec43fd8821bb356e851427676a55cc8531d746fe",
+            "size": 301,
+            "vsize": 301,
+            "version": 0,
+            "locktime": 0,
+            "vin": [
+                {
+                    "txid": "e974cb9a611e88fad14717a344d4d7c32b0553a943512a82481f6cd147dbf28c",
+                    "vout": 1,
+                    "sequence": 0
+                }
+            ],
+            "vout": [
+                {
+                    "value": "90",
+                    "n": 0,
+                    "address": "EVt9UG8ZMpBJTtrj5sFN8yQtqJR5mpngAd",
+                    "assetid": "61ccbfae9f8ce9660a71321041917139cb72cbb85bd105e92f0ed32cb1d1298f",
+                    "outputlock": 0
+                },
+                {
+                    "value": "445841.71067300",
+                    "n": 1,
+                    "address": "EHRprMBc3UPn9kvugAoFLeeR5QwU68XBc1",
+                    "assetid": "61ccbfae9f8ce9660a71321041917139cb72cbb85bd105e92f0ed32cb1d1298f",
+                    "outputlock": 0
+                }
+            ],
+            "blockhash": "",
+            "confirmations": 0,
+            "time": 0,
+            "blocktime": 0,
+            "type": 2,
+            "payloadversion": 0,
+            "payload": null,
+            "attributes": [
+                {
+                    "usage": 0,
+                    "data": "35353737303036373931393437373739343130"
+                }
+            ],
+            "programs": [
+                {
+                    "code": "2103e955ee5b3a3c6a96b6404fda64c32252b1f87068df6468381ec16e182b059717ac",
+                    "parameter": "408bbebd0eab0c48f07c6e02c0e910dc9372c4a0cdcb4d07c5e416f64d56b5a05395d6eb95ab96b9f3e311179a461746f8c8621e940847153c811701e88618d449"
+                }
+            ],
+        }
+    ]
 }
 ```
 
@@ -746,13 +802,6 @@ named arguments sample:
 	"params":{"paytoaddress":"Ef4UcaHwvFrFzzsyVf5YH4JBWgYgUqfTAB"}
 }
 ```
-positional arguments sample:
-```json
-{
-	"method": "createauxblock",
-	"params": ["Ef4UcaHwvFrFzzsyVf5YH4JBWgYgUqfTAB"]
-}
-```
 
 result sample:
 ```json
@@ -789,16 +838,6 @@ named arguments sample:
 	  "blockhash": "7926398947f332fe534b15c628ff0cd9dc6f7d3ea59c74801dc758ac65428e64",
 	  "auxpow": "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4b0313ee0904a880495b742f4254432e434f4d2ffabe6d6d9581ba0156314f1e92fd03430c6e4428a32bb3f1b9dc627102498e5cfbf26261020000004204cb9a010f32a00601000000000000ffffffff0200000000000000001976a914c0174e89bd93eacd1d5a1af4ba1802d412afc08688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90000000014acac4ee8fdd8ca7e0b587b35fce8c996c70aefdf24c333038bdba7af531266000000000001ccc205f0e1cb435f50cc2f63edd53186b414fcb22b719da8c59eab066cf30bdb0000000000000020d1061d1e456cae488c063838b64c4911ce256549afadfc6a4736643359141b01551e4d94f9e8b6b03eec92bb6de1e478a0e913e5f733f5884857a7c2b965f53ca880495bffff7f20a880495b"
 	}
-}
-```
-positional arguments sample:
-```json
-{
-	"method":"submitauxblock",
-	"params":[
-	  "7926398947f332fe534b15c628ff0cd9dc6f7d3ea59c74801dc758ac65428e64",
-	  "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4b0313ee0904a880495b742f4254432e434f4d2ffabe6d6d9581ba0156314f1e92fd03430c6e4428a32bb3f1b9dc627102498e5cfbf26261020000004204cb9a010f32a00601000000000000ffffffff0200000000000000001976a914c0174e89bd93eacd1d5a1af4ba1802d412afc08688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90000000014acac4ee8fdd8ca7e0b587b35fce8c996c70aefdf24c333038bdba7af531266000000000001ccc205f0e1cb435f50cc2f63edd53186b414fcb22b719da8c59eab066cf30bdb0000000000000020d1061d1e456cae488c063838b64c4911ce256549afadfc6a4736643359141b01551e4d94f9e8b6b03eec92bb6de1e478a0e913e5f733f5884857a7c2b965f53ca880495bffff7f20a880495b"
-	]
 }
 ```
 

@@ -13,7 +13,7 @@
     "HttpJsonPort": 20336,
     "NodePort": 20338,
     "NodeOpenPort": 20866,
-    "OpenService": true,
+    "OpenService": false,
     "PrintLevel": 0,
     "MaxLogsSize": 0,
     "MaxPerLogSize": 0,
@@ -30,7 +30,7 @@
       "AutoMining": false,
       "MinerInfo": "IOEX",
       "MinTxFee": 100,
-      "ActiveNet": "TestNet"
+      "ActiveNet": "MainNet"
     }
   }
 }

@@ -53,10 +53,6 @@ func (node *node) UpdateHandler(handler Handler) {
 
 func (node *node) initConnection() {
 	go listenNodePort()
-	// Listen open port if OpenService enabled
-	if Parameters.OpenService {
-		go listenNodeOpenPort()
-	}
 }
 
 func (node *node) start(inbound bool) {
