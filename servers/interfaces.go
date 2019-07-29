@@ -990,9 +990,10 @@ func GetUnlockUnspendOutput(param Params) map[string]interface{} {
 		return ResponsePack(InvalidParams, "")
 	}
 	type UTXOUnspentInfo struct {
-		TxID  string `json:"Txid"`
-		Index uint32 `json:"Index"`
-		Value string `json:"Value"`
+		TxID     string `json:"Txid"`
+		Index    uint32 `json:"Index"`
+		Value    string `json:"Value"`
+		LockTime uint32 `json:"LockTime"`
 	}
 	infos, err := chain.DefaultLedger.Store.GetUnspentFromProgramHash(*programHash, assetHash)
 	if err != nil {
@@ -1001,13 +1002,22 @@ func GetUnlockUnspendOutput(param Params) map[string]interface{} {
 	}
 	currentHeight := chain.DefaultLedger.Blockchain.GetBestHeight()
 	var UTXOoutputs []UTXOUnspentInfo
+	var referTxn *Transaction
 	for _, v := range infos {
-		txn, lockHeight, err := chain.DefaultLedger.Store.GetTransaction(v.TxID)
-		if err != nil && txn.IsCoinBaseTx() && currentHeight-lockHeight < config.Parameters.ChainParam.CoinbaseLockTime {
+		var lockHeight uint32
+		var isCoinbase bool
+		referTxn, _, err = chain.DefaultLedger.Store.GetTransaction(v.TxID)
+		if err != nil {
 			continue
 		}
-		UTXOoutputs = append(UTXOoutputs, UTXOUnspentInfo{TxID: ToReversedString(v.TxID), Index: v.Index, Value: v.Value.String()})
+		lockHeight = referTxn.LockTime
+		isCoinbase = referTxn.IsCoinBaseTx()
+		if isCoinbase && (currentHeight-lockHeight < config.Parameters.ChainParam.CoinbaseLockTime) {
+			continue
+		}
+		UTXOoutputs = append(UTXOoutputs, UTXOUnspentInfo{TxID: ToReversedString(v.TxID), Index: v.Index, Value: v.Value.String(), LockTime: 0})
 	}
+	log.Info("UTXOoutputs", UTXOoutputs)
 	return ResponsePack(Success, UTXOoutputs)
 }
 
