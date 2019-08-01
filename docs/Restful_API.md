@@ -194,7 +194,7 @@
                 "type": 0,
                 "payloadversion": 4,
                 "payload": {
-                    "CoinbaseData": "ELA"
+                    "CoinbaseData": "IOEX"
                 },
                 "attributes": [{
                     "usage": 0,
@@ -306,7 +306,7 @@
             "type": 0,
             "payloadversion": 4,
             "payload": {
-                "CoinbaseData": "ELA"
+                "CoinbaseData": "IOEX"
             },
             "attributes": [{
                 "usage": 0,
@@ -340,7 +340,7 @@
         "Desc": "Success",
         "Error": 0,
         "Result": {
-            "Name": "ELA",
+            "Name": "IOEX",
             "Description": "",
             "Precision": 8,
             "AssetType": 0,
@@ -360,7 +360,7 @@
         "Error": 0,
         "Result": [{
             "AssetId": "a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0",
-            "AssetName": "ELA",
+            "AssetName": "IOEX",
             "Utxo": [{
                 "Txid": "c8d4dc984da78c878b9dab752c077b41a98f6e67e5ee6b04cc3d45cb4f42b81b",
                 "Index": 1,
@@ -420,19 +420,3 @@
         "Result": "2e8d51bdbba82af7a7ed334cb0fb60ad9a5da7e5170f9d2509023f3ed3cce1d0"
     }
     ```
-
-    The generation of the data parameter value (the signed transaction data) in this interface can be done in two ways:
-
-    1. Use the [Elastos.ELA.Client](https://github.com/elastos/Elastos.ELA.Client) command line tool, examples are as follows
-    ```bash
-    ./ela-cli wallet -t create --from EdAEC51BmmzJFHUdMJ6bR5fZB4oo919E8n --amount 10 --fee 0.001 --to EZmpNht7UAHtpqVBMDfPRDtQCmAY6eYjgV
-    ```
-
-    Please replace the parameter values of `--from` and `--to` in the example with the actual ELA Address.
-    ```bash
-    ./ela-cli wallet -t sign --file to_be_signed.txn
-    ```
-
-    Here you need to enter the password of your local wallet. The long string of hexadecimal characters returned by this command is the signed transaction data.
-
-    2. Use the relevant tools provided by the [Elastos.ELA.Utilities.Java](https://github.com/elastos/Elastos.ELA.Utilities.Java) tool library to generate specific reference to the documentation of the repository.

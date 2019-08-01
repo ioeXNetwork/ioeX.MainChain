@@ -32,7 +32,7 @@
     "MaxBlockSize": 8000000,
     "MinCrossChainTxFee": 10000,
     "PowConfiguration": {
-      "PayToAddr": "8VYXVxKKSAxkmRrfmGpQR2Kc66XhG6m3ta",
+      "PayToAddr": "EeEkSiRMZqg5rd9a2yPaWnvdPcikFtsrjE",
       "AutoMining": false,
       "MinerInfo": "IOEX",
       "MinTxFee": 100,
